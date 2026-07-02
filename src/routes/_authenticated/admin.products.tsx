@@ -186,15 +186,39 @@ function ProductModalForm({
       ? editing.variants
       : editing ? [] : ["Small", "Medium", "Large", "XL"]
   );
+  const [name, setName] = useState(editing?.name || "");
+  const [slug, setSlug] = useState(editing?.slug || "");
+  const [slugModified, setSlugModified] = useState(!!editing);
   const [customImageUrl, setCustomImageUrl] = useState("");
   const [customVariant, setCustomVariant] = useState("");
   const [brokenImages, setBrokenImages] = useState<string[]>([]);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setName(val);
+    if (!slugModified) {
+      setSlug(
+        val
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+      );
+    }
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSlug(e.target.value);
+    setSlugModified(true);
+  };
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const data: any = Object.fromEntries(fd.entries());
     if (editing) data.id = editing.id;
+    data.name = name;
+    data.slug = slug;
     data.price = Number(data.price);
     data.comparePrice = data.comparePrice ? Number(data.comparePrice) : null;
     data.inventory = Number(data.inventory);
@@ -218,11 +242,11 @@ function ProductModalForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Product Name *</label>
-          <input required name="name" defaultValue={editing?.name} placeholder="e.g. Atelier Travertine Vase" className="w-full border-b py-2 focus:outline-none focus:border-foreground transition-colors bg-transparent text-sm mt-1" />
+          <input required name="name" value={name} onChange={handleNameChange} placeholder="e.g. Atelier Travertine Vase" className="w-full border-b py-2 focus:outline-none focus:border-foreground transition-colors bg-transparent text-sm mt-1" />
         </div>
         <div>
           <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Slug (URL friendly) *</label>
-          <input required name="slug" defaultValue={editing?.slug} placeholder="e.g. atelier-travertine-vase" className="w-full border-b py-2 focus:outline-none focus:border-foreground transition-colors bg-transparent text-sm mt-1" />
+          <input required name="slug" value={slug} onChange={handleSlugChange} placeholder="e.g. atelier-travertine-vase" className="w-full border-b py-2 focus:outline-none focus:border-foreground transition-colors bg-transparent text-sm mt-1" />
         </div>
       </div>
 

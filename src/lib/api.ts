@@ -101,7 +101,10 @@ export const getSettingsFn = createServerFn({ method: "GET" }).handler(async () 
 export const createOrderFn = createServerFn({ method: "POST" })
   .validator((data: any) => data)
   .handler(async ({ data }) => {
-    const orderNumber = `GD-${Math.floor(100000 + Math.random() * 900000)}`;
+    let orderNumber = `GD-${Math.floor(100000 + Math.random() * 900000)}`;
+    while (await prisma.order.findUnique({ where: { orderNumber }, select: { id: true } })) {
+      orderNumber = `GD-${Math.floor(100000 + Math.random() * 900000)}`;
+    }
     const order = await prisma.order.create({
       data: {
         ...data,
@@ -188,6 +191,7 @@ export const adminSaveProductFn = createServerFn({ method: "POST" })
     await verifyAdminSession();
     const {
       id,
+      slug: inputSlug,
       category_id, categoryId,
       compare_price, comparePrice,
       is_featured, isFeatured,
@@ -196,10 +200,34 @@ export const adminSaveProductFn = createServerFn({ method: "POST" })
       is_best_seller, isBestSeller,
       ...rest
     } = data;
+
+    let baseSlug = (inputSlug || data.name || "product")
+      .toString()
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    if (!baseSlug) baseSlug = `product-${Date.now()}`;
+
+    let finalSlug = baseSlug;
+    let counter = 1;
+    while (true) {
+      const existing = await prisma.product.findUnique({
+        where: { slug: finalSlug },
+        select: { id: true },
+      });
+      if (!existing || existing.id === id) {
+        break;
+      }
+      finalSlug = `${baseSlug}-${counter++}`;
+    }
+
     const finalCat = category_id || categoryId || null;
     const finalCompare = compare_price || comparePrice || null;
     const mapped = {
       ...rest,
+      name: (data.name || "Untitled Product").toString().trim(),
+      slug: finalSlug,
       categoryId: finalCat === "" ? null : finalCat,
       comparePrice: finalCompare === "" || finalCompare === null ? null : Number(finalCompare),
       isFeatured: !!(is_featured || isFeatured),
