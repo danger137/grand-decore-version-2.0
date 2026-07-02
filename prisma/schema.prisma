@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Admin {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("admin")
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  name        String
+  slug        String    @unique
+  image       String?
+  description String?
+  sort        Int       @default(0)
+  createdAt   DateTime  @default(now())
+  products    Product[]
+}
+
+model Product {
+  id            String    @id @default(uuid())
+  name          String
+  slug          String    @unique
+  description   String?
+  price         Float
+  comparePrice  Float?
+  categoryId    String?
+  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  images        Json      @default("[]")
+  videos        Json      @default("[]")
+  specs         Json      @default("{}")
+  variants      Json      @default("[]")
+  inventory     Int       @default(0)
+  isFeatured    Boolean   @default(false)
+  isNew         Boolean   @default(false)
+  isTrending    Boolean   @default(false)
+  isBestSeller  Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+  reviews       Review[]
+}
+
+model Review {
+  id           String   @id @default(uuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customerName String
+  rating       Int
+  title        String?
+  body         String?
+  createdAt    DateTime @default(now())
+}
+
+model Order {
+  id          String   @id @default(uuid())
+  orderNumber String   @unique
+  fullName    String
+  phone       String
+  whatsapp    String?
+  city        String
+  address     String
+  items       Json
+  subtotal    Float
+  shipping    Float    @default(0)
+  total       Float
+  status      String   @default("pending")
+  notes       String?
+  createdAt   DateTime @default(now())
+}
+
+model StoreSettings {
+  id               Int     @id @default(1)
+  storeName        String  @default("GrandDecore")
+  logo             String?
+  whatsapp         String  @default("03238041309")
+  email            String  @default("hello@granddecore.com")
+  phone            String  @default("03238041309")
+  socials          Json    @default("{\"instagram\":\"https://instagram.com\",\"facebook\":\"https://facebook.com\",\"tiktok\":\"https://tiktok.com\"}")
+  shippingFee      Float   @default(250)
+  freeShippingOver Float   @default(10000)
+}
