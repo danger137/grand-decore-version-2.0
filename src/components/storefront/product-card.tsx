@@ -14,7 +14,33 @@ export function ProductCard({ product, onQuickView }: { product: Product; onQuic
   const [hover, setHover] = useState(false);
   const img1 = product.images[0] ?? "https://placehold.co/800x1000";
   const img2 = product.images[1] ?? img1;
-  const onSale = product.compare_price && product.compare_price > product.price;
+
+  let displayPrice = product.price;
+  let displayCompare = product.compare_price;
+  let hasMultiplePrices = false;
+  let defaultVariantName: string | undefined = undefined;
+
+  if (Array.isArray(product.variants) && product.variants.length > 0) {
+    const firstVar: any = product.variants[0];
+    defaultVariantName = typeof firstVar === "string" ? firstVar : firstVar?.name;
+    const variantPrices = product.variants
+      .map((v: any) => (typeof v === "object" && v.price ? Number(v.price) : null))
+      .filter((p): p is number => p !== null && !isNaN(p));
+    if (variantPrices.length > 0) {
+      const minPrice = Math.min(...variantPrices);
+      const maxPrice = Math.max(...variantPrices);
+      if (minPrice !== maxPrice) {
+        hasMultiplePrices = true;
+      }
+      displayPrice = minPrice;
+      const firstObj: any = product.variants.find((v: any) => typeof v === "object" && Number(v.price) === minPrice);
+      if (firstObj && firstObj.comparePrice) {
+        displayCompare = Number(firstObj.comparePrice);
+      }
+    }
+  }
+
+  const onSale = displayCompare && displayCompare > displayPrice;
 
   return (
     <div
@@ -64,8 +90,8 @@ export function ProductCard({ product, onQuickView }: { product: Product; onQuic
             <button
               onClick={(e) => {
                 e.preventDefault();
-                add({ productId: product.id, slug: product.slug, name: product.name, price: product.price, image: img1, quantity: 1 });
-                toast.success(`${product.name} added`);
+                add({ productId: product.id, slug: product.slug, name: product.name, price: displayPrice, image: img1, quantity: 1, variant: defaultVariantName });
+                toast.success(`${product.name}${defaultVariantName ? ` (${defaultVariantName})` : ""} added`);
               }}
               className="flex-1 bg-foreground text-background text-[11px] uppercase tracking-[0.18em] py-3 inline-flex items-center justify-center gap-2 hover:bg-primary"
             >
@@ -82,8 +108,10 @@ export function ProductCard({ product, onQuickView }: { product: Product; onQuic
         <div className="pt-4">
           <h3 className="text-sm font-medium leading-tight">{product.name}</h3>
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-sm">{fmtPKR(product.price)}</span>
-            {onSale && <span className="text-xs text-muted-foreground line-through">{fmtPKR(product.compare_price!)}</span>}
+            <span className="text-sm font-medium text-foreground">
+              {hasMultiplePrices ? `From ${fmtPKR(displayPrice)}` : fmtPKR(displayPrice)}
+            </span>
+            {onSale && <span className="text-xs text-muted-foreground line-through">{fmtPKR(displayCompare!)}</span>}
           </div>
         </div>
       </Link>

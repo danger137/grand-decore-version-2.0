@@ -11,8 +11,10 @@ const mapProduct = (p: any) => {
   const reviews_count = p._count?.reviews !== undefined ? p._count.reviews : revs.length;
   const avg_rating = revs.length ? (revs.reduce((s: any, r: any) => s + r.rating, 0) / revs.length).toFixed(1) : "0";
   const compare_price = p.comparePrice && p.comparePrice > p.price ? p.comparePrice : Math.round((p.price * 1.25) / 500) * 500;
+  const colors = p.specs && typeof p.specs === 'object' && p.specs.colors && Array.isArray(p.specs.colors) ? p.specs.colors : (p.colors || []);
   return {
     ...p,
+    colors,
     category_id: p.categoryId,
     compare_price,
     is_featured: p.isFeatured,
@@ -198,6 +200,7 @@ export const adminSaveProductFn = createServerFn({ method: "POST" })
       is_new, isNew,
       is_trending, isTrending,
       is_best_seller, isBestSeller,
+      colors, color,
       ...rest
     } = data;
 
@@ -224,7 +227,13 @@ export const adminSaveProductFn = createServerFn({ method: "POST" })
 
     const finalCat = category_id || categoryId || null;
     const finalCompare = compare_price || comparePrice || null;
-    const mapped = {
+    const currentSpecs: any = typeof rest.specs === "object" && rest.specs !== null ? { ...rest.specs } : (typeof rest.specs === "string" ? JSON.parse(rest.specs || "{}") : {});
+    if (Array.isArray(colors) && colors.length > 0) {
+      currentSpecs.colors = colors;
+    } else {
+      delete currentSpecs.colors;
+    }
+    const mapped: any = {
       ...rest,
       name: (data.name || "Untitled Product").toString().trim(),
       slug: finalSlug,
@@ -236,6 +245,7 @@ export const adminSaveProductFn = createServerFn({ method: "POST" })
       isBestSeller: !!(is_best_seller || isBestSeller),
       images: Array.isArray(data.images) ? data.images : [],
       variants: Array.isArray(data.variants) ? data.variants : [],
+      specs: currentSpecs,
     };
     if (id) {
       const updated = await prisma.product.update({ where: { id }, data: mapped });

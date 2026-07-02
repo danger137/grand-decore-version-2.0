@@ -8,8 +8,9 @@ export type Product = {
   category_id: string | null;
   images: string[];
   videos: string[];
-  specs: Record<string, string> | null;
-  variants: string[];
+  specs: Record<string, any> | null;
+  variants: any[];
+  colors?: any[];
   inventory: number;
   is_featured: boolean;
   is_new: boolean;
@@ -66,3 +67,29 @@ export type StoreSettings = {
 
 export const fmtPKR = (n: number) =>
   new Intl.NumberFormat("en-PK", { style: "currency", currency: "PKR", maximumFractionDigits: 0 }).format(n);
+
+export type ParsedReviewBody = {
+  text: string;
+  packageQuality?: string;
+  image?: string;
+};
+
+export const parseReviewBody = (body?: string | null): ParsedReviewBody => {
+  if (!body) return { text: "" };
+  const trimmed = body.trim();
+  if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (typeof parsed === "object" && parsed !== null) {
+        return {
+          text: parsed.text !== undefined ? String(parsed.text) : (parsed.body !== undefined ? String(parsed.body) : ""),
+          packageQuality: parsed.packageQuality !== undefined ? String(parsed.packageQuality) : undefined,
+          image: parsed.image !== undefined ? String(parsed.image) : undefined,
+        };
+      }
+    } catch (e) {
+      // ignore
+    }
+  }
+  return { text: body };
+};

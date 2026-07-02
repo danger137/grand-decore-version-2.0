@@ -6,7 +6,7 @@ import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { adminReviewsQuery, productsQuery } from "@/lib/queries";
 import { adminSaveReviewFn, adminDeleteReviewFn } from "@/lib/api";
-import type { Review } from "@/lib/types";
+import { parseReviewBody, type Review } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/admin/reviews")({
   loader: ({ context }) => {
@@ -22,6 +22,7 @@ function AdminReviews() {
   const qc = useQueryClient();
 
   const [editing, setEditing] = useState<Review | null>(null);
+  const [editImg, setEditImg] = useState<string | undefined>(undefined);
   const [open, setOpen] = useState(false);
 
   const saveMutation = useMutation({
@@ -53,6 +54,12 @@ function AdminReviews() {
     const data: any = Object.fromEntries(fd.entries());
     if (editing) data.id = editing.id;
     data.rating = Number(data.rating);
+    const bodyObj = {
+      text: fd.get("text") ? String(fd.get("text")) : (fd.get("body") ? String(fd.get("body")) : ""),
+      packageQuality: fd.get("packageQuality") ? String(fd.get("packageQuality")) : "",
+      image: editImg !== undefined ? editImg : (editing ? parseReviewBody(editing.body).image || "" : ""),
+    };
+    data.body = JSON.stringify(bodyObj);
     saveMutation.mutate(data);
   };
 
@@ -63,9 +70,9 @@ function AdminReviews() {
           <h1 className="font-display text-3xl">Reviews</h1>
           <p className="text-muted-foreground mt-1">Manage customer reviews and feedback dynamically.</p>
         </div>
-        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setEditing(null); }}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) { setEditing(null); setEditImg(undefined); } }}>
           <DialogTrigger asChild>
-            <button onClick={() => setEditing(null)} className="flex items-center gap-2 bg-foreground text-background px-4 py-2 text-xs uppercase tracking-widest hover:bg-primary">
+            <button onClick={() => { setEditing(null); setEditImg(undefined); }} className="flex items-center gap-2 bg-foreground text-background px-4 py-2 text-xs uppercase tracking-widest hover:bg-primary">
               <Plus className="h-4 w-4" /> Add Review
             </button>
           </DialogTrigger>
@@ -102,8 +109,42 @@ function AdminReviews() {
                 <input required name="title" defaultValue={editing?.title || ""} placeholder="e.g. Stunning piece" className="w-full border-b py-2 focus:outline-none" />
               </div>
               <div>
-                <label className="text-xs uppercase tracking-widest text-muted-foreground">Review Body</label>
-                <textarea required name="body" rows={4} defaultValue={editing?.body || ""} placeholder="Write what the customer experienced..." className="w-full border-b py-2 focus:outline-none" />
+                <label className="text-xs uppercase tracking-widest text-muted-foreground">Packaging & Delivery Quality</label>
+                <input name="packageQuality" defaultValue={editing ? parseReviewBody(editing.body).packageQuality || "" : ""} placeholder="e.g. 10/10 Bubble wrapped & double boxed safely" className="w-full border-b py-2 focus:outline-none text-xs" />
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-widest text-muted-foreground block mb-1">Customer Photo</label>
+                <div className="flex items-center gap-3">
+                  <label className="cursor-pointer bg-muted hover:bg-muted/80 text-foreground px-3 py-1.5 rounded text-xs font-medium transition-colors">
+                    Upload Photo
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            if (reader.result) setEditImg(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                  {(editImg || (editing && parseReviewBody(editing.body).image)) && (
+                    <div className="relative w-10 h-10 border rounded overflow-hidden">
+                      <img src={editImg || (editing ? parseReviewBody(editing.body).image : "")} alt="" className="w-full h-full object-cover" />
+                      <button type="button" onClick={() => setEditImg("")} className="absolute inset-0 bg-black/60 text-white flex items-center justify-center text-[10px] opacity-0 hover:opacity-100 transition-opacity">✕</button>
+                    </div>
+                  )}
+                  <span className="text-[11px] text-muted-foreground">{(editImg || (editing && parseReviewBody(editing.body).image)) ? "Photo attached" : "No photo"}</span>
+                </div>
+              </div>
+              <div>
+                <label className="text-xs uppercase tracking-widest text-muted-foreground">Review Content</label>
+                <textarea required name="body" rows={4} defaultValue={editing ? parseReviewBody(editing.body).text : ""} placeholder="Write what the customer experienced..." className="w-full border-b py-2 focus:outline-none" />
               </div>
               <button disabled={saveMutation.isPending} className="w-full bg-foreground text-background py-3 text-xs uppercase tracking-widest mt-6 hover:bg-primary">
                 {saveMutation.isPending ? "Saving..." : "Save Review"}
@@ -133,7 +174,9 @@ function AdminReviews() {
               </tr>
             </thead>
             <tbody className="divide-y">
-              {reviews.map((r) => (
+              {reviews.map((r) => {
+                const parsed = parseReviewBody(r.body);
+                return (
                 <tr key={r.id} className="hover:bg-muted/50 align-top">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-3 min-w-[160px]">
@@ -159,11 +202,32 @@ function AdminReviews() {
                   </td>
                   <td className="px-6 py-4 max-w-md">
                     <p className="font-display text-base text-foreground">{r.title}</p>
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{r.body}</p>
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">{parsed.text}</p>
+                    {parsed.packageQuality && (
+                      <div className="mt-2 bg-muted/40 border border-muted px-2 py-1 rounded text-[11px] text-foreground inline-flex items-center gap-1.5">
+                        <span className="font-semibold text-primary">📦 Pkg:</span>
+                        <span>{parsed.packageQuality}</span>
+                      </div>
+                    )}
+                    {parsed.image && (
+                      <div className="mt-2 flex items-center gap-2">
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <div className="w-10 h-10 rounded border overflow-hidden cursor-pointer hover:opacity-80 shrink-0">
+                              <img src={parsed.image} alt="Review" className="w-full h-full object-cover" />
+                            </div>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-xl p-2 bg-background">
+                            <img src={parsed.image} alt="Review Full" className="w-full max-h-[80vh] object-contain rounded mx-auto" />
+                          </DialogContent>
+                        </Dialog>
+                        <span className="text-[10px] text-muted-foreground font-mono">Customer Photo Attached</span>
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex justify-end gap-2">
-                      <button onClick={() => { setEditing(r); setOpen(true); }} className="p-2 hover:bg-accent rounded-sm" title="Edit Review">
+                      <button onClick={() => { setEditing(r); setEditImg(parsed.image); setOpen(true); }} className="p-2 hover:bg-accent rounded-sm" title="Edit Review">
                         <Edit2 className="h-4 w-4" />
                       </button>
                       <button onClick={() => { if (confirm("Delete this review?")) deleteMutation.mutate(r.id); }} className="p-2 hover:bg-destructive/10 text-destructive rounded-sm" title="Delete Review">
@@ -172,7 +236,8 @@ function AdminReviews() {
                     </div>
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         )}
