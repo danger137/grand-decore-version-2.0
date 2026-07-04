@@ -80,10 +80,15 @@ export function ProductCard({ product, onQuickView }: { product: Product; onQuic
         </div>
 
         <div className="pt-4">
-          <h3 className="text-sm font-medium leading-tight">{product.name}</h3>
+          {/* Note: Agar product title ki font family change karni hai to "inter" ki jagah apna font name likhein (e.g., "serif" ya "Playfair Display") */}
+          <h3 className="text-[20px] font-medium leading-tight" style={{ fontFamily: "inter" }}>{product.name}</h3>
+
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-sm">{fmtPKR(product.price)}</span>
-            {onSale && <span className="text-xs text-muted-foreground line-through">{fmtPKR(product.compare_price!)}</span>}
+            {/* 1. PRICE BOLD: font-black class se full heavy bold ho jayega */}
+            <span className="text-[20px] font-black text-foreground">{fmtPKR(product.price)}</span>
+
+            {/* 2. COMPARE PRICE GREEN: text-green-600 lagaya hai takay green ho jaye */}
+            {onSale && <span className="text-[14px] text-green-600 line-through font-medium">{fmtPKR(product.compare_price!)}</span>}
           </div>
         </div>
       </Link>

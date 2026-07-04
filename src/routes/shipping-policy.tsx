@@ -8,7 +8,7 @@ export const Route = createFileRoute("/shipping-policy")({
       <h2>Rates</h2>
       <ul>
         <li>Flat rate: <strong>PKR 250</strong> nationwide</li>
-        <li>Free shipping on orders over <strong>PKR 10,000</strong></li>
+        <li>Free shipping on orders over <strong>PKR 10k</strong></li>
       </ul>
       <h2>Timelines</h2>
       <ul>

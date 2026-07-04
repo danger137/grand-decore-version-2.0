@@ -16,9 +16,9 @@ function ContactPage() {
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name || !form.email || !form.msg) { 
-      toast.error("Please fill in your name, email, and message"); 
-      return; 
+    if (!form.name || !form.email || !form.msg) {
+      toast.error("Please fill in your name, email, and message");
+      return;
     }
     setLoading(true);
     try {
@@ -37,7 +37,7 @@ function ContactPage() {
     <StoreLayout>
       <section className="container-x py-20 grid lg:grid-cols-2 gap-16">
         <div>
-          <p className="eyebrow">Get in touch</p>
+          <p className="eyebrow" style={{ color: "#4CC157" }}>Get in touch</p>
           <h1 className="font-display text-5xl md:text-6xl mt-3">We'd love to hear from you.</h1>
           <p className="mt-4 text-muted-foreground max-w-md">Questions about a piece, custom commissions, trade orders — we read every message.</p>
 

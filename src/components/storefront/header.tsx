@@ -28,8 +28,8 @@ export function Header() {
         <div className="overflow-hidden">
           <div className="flex whitespace-nowrap animate-marquee py-2">
             {Array.from({ length: 2 }).map((_, i) => (
-              <div key={i} className="flex shrink-0 gap-12 px-6">
-                <span>Free shipping over PKR 10,000</span>
+              <div key={i} className="flex shrink-0 gap-12 px-6 py-3">
+                <span>Free shipping over PKR 10k</span>
                 <span>•</span>
                 <span>Cash on Delivery across Pakistan</span>
                 <span>•</span>

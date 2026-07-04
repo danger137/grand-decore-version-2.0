@@ -39,7 +39,8 @@ export function HeroSlider() {
   }, []);
   const s = slides[i];
   return (
-    <section className="relative h-[88vh] min-h-[620px] w-full overflow-hidden bg-foreground">
+    // 🛠️ Height ko h-[88vh] se badal kar h-[85vh] ya h-[90vh] ki jagah relative flex content balance diya hai
+    <section className="relative h-[88vh] min-h-[650px] w-full overflow-hidden bg-foreground">
       <AnimatePresence mode="sync">
         <motion.div
           key={i}
@@ -56,24 +57,33 @@ export function HeroSlider() {
             autoPlay muted loop playsInline
             className="h-full w-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/40" />
         </motion.div>
       </AnimatePresence>
 
-      <div className="relative z-10 h-full container-x flex flex-col justify-end pb-20 md:pb-28">
+      {/* 🛠️ Vertically items-center ya justify-center ko lg:pb-32 diya taake text bottom se thoda upar uth jaye */}
+      <div className="relative z-10 h-full container-x flex flex-col justify-center lg:justify-center pt-16 pb-24 lg:pb-12">
         <AnimatePresence mode="wait">
           <motion.div
             key={i}
-            initial={{ y: 40, opacity: 0 }}
+            initial={{ y: 30, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
-            className="max-w-2xl text-background"
+            className="max-w-4xl text-background"
           >
-            <p className="eyebrow" style={{ color: "rgba(255,255,255,0.7)" }}>{s.eyebrow}</p>
-            <h1 className="font-display text-5xl md:text-7xl lg:text-8xl mt-6 leading-[1] whitespace-pre-line">{s.title}</h1>
-            <p className="mt-6 text-base md:text-lg max-w-md opacity-85">{s.subtitle}</p>
-            <Link to={s.cta.to} className="mt-10 inline-flex items-center gap-3 bg-background text-foreground px-8 py-4 text-xs uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground transition-colors">
+            <p className="eyebrow text-xs uppercase tracking-[0.2em]" style={{ color: "#4CC157" }}>{s.eyebrow}</p>
+
+            {/* 🛠️ Font size ko thoda stable kiya (lg:text-7xl) aur leading-none diya taake overlap na kare */}
+            <h1 className="font-display text-4xl md:text-6xl lg:text-7xl mt-4 leading-[1.05] tracking-tight whitespace-pre-line">
+              {s.title}
+            </h1>
+
+            {/* 🛠️ Margin top thoda kam kiya mt-4 */}
+            <p className="mt-4 text-base md:text-lg max-w-md opacity-85 leading-relaxed">{s.subtitle}</p>
+
+            {/* 🛠️ Button margin optimized */}
+            <Link to={s.cta.to} className="mt-6 lg:mt-8 inline-flex items-center gap-3 bg-background text-foreground px-7 py-3.5 text-xs uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground transition-colors shadow-lg">
               {s.cta.label} →
             </Link>
           </motion.div>

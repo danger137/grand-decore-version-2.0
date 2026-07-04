@@ -145,10 +145,10 @@ function ProductPage() {
 
         {/* Info */}
         <div>
-          <p className="eyebrow">{cats.find((c) => c.id === product.category_id)?.name}</p>
-          <h1 className="font-display text-4xl md:text-5xl mt-3 leading-[1.05]">{product.name}</h1>
+          <p className="eyebrow text-[#4CC157]">{cats.find((c) => c.id === product.category_id)?.name}</p>
+          <h1 className="text-2xl md:text-3xl mt-3 leading-[1.05]" style={{ fontFamily: "inter" }}>{product.name}</h1>
           <div className="mt-4 flex items-center gap-3">
-            <div className="flex text-primary">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`h-4 w-4 ${i < Math.round(avgRating) ? "fill-current" : ""}`} />)}</div>
+            <div className="flex text-[#E7CB48]">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`h-4 w-4 ${i < Math.round(avgRating) ? "fill-current" : ""}`} />)}</div>
             <span className="text-xs text-muted-foreground">{reviews.length} reviews</span>
           </div>
 
@@ -194,7 +194,7 @@ function ProductPage() {
           {/* Trust */}
           <div className="mt-10 grid grid-cols-3 gap-4 text-xs">
             {[
-              { Icon: Truck, t: "Free over PKR 10k" },
+              { Icon: Truck, t: "Free over PKR 5k" },
               { Icon: RotateCcw, t: "30-day returns" },
               { Icon: ShieldCheck, t: "Secure COD" },
             ].map((b) => (
@@ -205,20 +205,24 @@ function ProductPage() {
           {/* Accordion */}
           <div className="mt-12 divide-y border-y">
             {[
-              { t: "Specifications", c: (
-                <ul className="text-sm text-muted-foreground space-y-1">
-                  {Object.entries(product.specs ?? {}).map(([k, v]) => <li key={k}><span className="text-foreground">{k}:</span> {v as string}</li>)}
-                </ul>
-              )},
-              { t: "Shipping", c: <p className="text-sm text-muted-foreground">Free shipping on orders over PKR 10,000. Standard delivery 3–5 business days nationwide. Cash on Delivery available.</p> },
+              {
+                t: "Specifications", c: (
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    {Object.entries(product.specs ?? {}).map(([k, v]) => <li key={k}><span className="text-foreground">{k}:</span> {v as string}</li>)}
+                  </ul>
+                )
+              },
+              { t: "Shipping", c: <p className="text-sm text-muted-foreground">Free shipping on orders over PKR 10k. Standard delivery 3–5 business days nationwide. Cash on Delivery available.</p> },
               { t: "Refund & Returns", c: <p className="text-sm text-muted-foreground">30-day no-questions-asked returns. Items must be unused and in original packaging. See full refund policy.</p> },
-              { t: "FAQ", c: (
-                <div className="text-sm text-muted-foreground space-y-3">
-                  <p><b className="text-foreground">Is this hand-made?</b> Yes — every piece is made by hand and may have subtle variation.</p>
-                  <p><b className="text-foreground">Do you ship internationally?</b> Currently we ship across Pakistan. International by request.</p>
-                  <p><b className="text-foreground">Care?</b> Wipe with a soft, dry cloth. Avoid harsh chemicals.</p>
-                </div>
-              )},
+              {
+                t: "FAQ", c: (
+                  <div className="text-sm text-muted-foreground space-y-3">
+                    <p><b className="text-foreground">Is this hand-made?</b> Yes — every piece is made by hand and may have subtle variation.</p>
+                    <p><b className="text-foreground">Do you ship internationally?</b> Currently we ship across Pakistan. International by request.</p>
+                    <p><b className="text-foreground">Care?</b> Wipe with a soft, dry cloth. Avoid harsh chemicals.</p>
+                  </div>
+                )
+              },
             ].map((row, i) => (
               <div key={row.t}>
                 <button onClick={() => setFaqOpen(faqOpen === i ? null : i)} className="w-full flex justify-between items-center py-5 text-left">

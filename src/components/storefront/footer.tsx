@@ -3,17 +3,40 @@ import { Instagram, Facebook, Music2 } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="mt-32 border-t border-border bg-bone text-foreground">
+    // FIX: mt-32 ko hata kar mt-0 kiya taake about page ya kisi bhi page ke niche extra white space zero ho jaye
+    <footer className="mt-0 border-t border-stone-800 bg-black text-white w-full">
       <div className="container-x py-20 grid gap-12 md:grid-cols-4">
         <div>
-          <Link to="/" className="font-display text-3xl">Grand<span className="text-primary">Decore</span></Link>
-          <p className="mt-4 text-sm text-muted-foreground max-w-xs leading-relaxed">
+          <Link to="/" className="font-display text-3xl text-white">
+            Grand<span className="text-primary">Decore</span>
+          </Link>
+          <p className="mt-4 text-sm text-stone-400 max-w-xs leading-relaxed">
             Editorial home decor for the considered home. Hand-crafted pieces, limited editions, shipped across Pakistan.
           </p>
+
+          {/* Social Icons Hover Transitions */}
           <div className="mt-6 flex gap-3">
-            <a href="https://instagram.com" aria-label="Instagram" className="p-2 border hover:bg-foreground hover:text-background"><Instagram className="h-4 w-4" /></a>
-            <a href="https://facebook.com" aria-label="Facebook" className="p-2 border hover:bg-foreground hover:text-background"><Facebook className="h-4 w-4" /></a>
-            <a href="https://tiktok.com" aria-label="TikTok" className="p-2 border hover:bg-foreground hover:text-background"><Music2 className="h-4 w-4" /></a>
+            <a
+              href="https://instagram.com"
+              aria-label="Instagram"
+              className="p-2 border border-stone-700 text-white transition-colors duration-300 hover:border-[#4CC157] hover:text-[#4CC157]"
+            >
+              <Instagram className="h-4 w-4" />
+            </a>
+            <a
+              href="https://facebook.com"
+              aria-label="Facebook"
+              className="p-2 border border-stone-700 text-white transition-colors duration-300 hover:border-[#4CC157] hover:text-[#4CC157]"
+            >
+              <Facebook className="h-4 w-4" />
+            </a>
+            <a
+              href="https://tiktok.com"
+              aria-label="TikTok"
+              className="p-2 border border-stone-700 text-white transition-colors duration-300 hover:border-[#4CC157] hover:text-[#4CC157]"
+            >
+              <Music2 className="h-4 w-4" />
+            </a>
           </div>
         </div>
 
@@ -38,8 +61,9 @@ export function Footer() {
         ]} />
       </div>
 
-      <div className="border-t border-border">
-        <div className="container-x flex flex-col md:flex-row gap-3 justify-between items-center py-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+      {/* Bottom Bar: bg-[#fff] ko bg-stone-950 ya black kiya taake design visual consistency bani rahe aur padding py-6 kiya */}
+      <div className="border-t border-stone-800 bg-stone-950">
+        <div className="container-x flex flex-col md:flex-row gap-3 justify-between items-center py-6 text-xs uppercase tracking-[0.18em] text-stone-400">
           <p>© {new Date().getFullYear()} GrandDecore. All rights reserved.</p>
           <p>Made with care in Pakistan • COD nationwide</p>
         </div>
@@ -51,10 +75,14 @@ export function Footer() {
 function FooterCol({ title, links }: { title: string; links: { to: string; label: string }[] }) {
   return (
     <div>
-      <p className="eyebrow">{title}</p>
+      <p className="text-stone-200 tracking-[0.18em] uppercase text-xs font-semibold">{title}</p>
       <ul className="mt-5 space-y-3 text-sm">
         {links.map((l) => (
-          <li key={l.label}><Link to={l.to} className="hover:text-primary">{l.label}</Link></li>
+          <li key={l.label}>
+            <Link to={l.to} className="text-stone-400 hover:text-white transition-colors">
+              {l.label}
+            </Link>
+          </li>
         ))}
       </ul>
     </div>

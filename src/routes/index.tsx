@@ -39,7 +39,7 @@ function HomePage() {
       <HeroSlider />
 
       {/* Brand strip */}
-      <section className="border-y border-border bg-bone">
+      <section className="border-y border-border bg-[#000]">
         <div className="container-x py-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
           {[
             { Icon: Award, label: "Hand-Crafted" },
@@ -47,7 +47,7 @@ function HomePage() {
             { Icon: ShieldCheck, label: "30-Day Returns" },
             { Icon: Sparkles, label: "Limited Editions" },
           ].map(({ Icon, label }) => (
-            <div key={label} className="flex items-center gap-3"><Icon className="h-4 w-4 text-primary" />{label}</div>
+            <div key={label} className="flex items-center gap-3 text-[#fff]"><Icon className="h-4 w-4 text-[#fff]" />{label}</div>
           ))}
         </div>
       </section>
@@ -60,10 +60,30 @@ function HomePage() {
             <Reveal key={c.id} delay={i * 0.05}>
               <Link to="/shop" search={{ category: c.slug } as never} className="group block relative overflow-hidden bg-sand aspect-[3/4]">
                 <img src={c.image ?? ""} alt={c.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] group-hover:scale-110" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+
+                {/* Shadow Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-500" />
+
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-background">
-                  <h3 className="font-display text-2xl">{c.name}</h3>
-                  <p className="text-xs uppercase tracking-[0.18em] mt-1 opacity-80">Shop now →</p>
+
+                  {/* 🛠️ Aapka exact Green color, Bold Text, aur Smooth Upar-se-Neeche Animation */}
+                  <h3
+                    className="font-display text-2xl font-extrabold tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]
+                         transition-all duration-500 ease-out
+                         transform -translate-y-3 opacity-90
+                         group-hover:translate-y-0 group-hover:opacity-100"
+                    style={{ color: '#fff', fontFamily: 'Inter, sans-serif', fontWeight: '700' }}
+
+                  >
+                    {c.name}
+                  </h3>
+
+                  {/* Shop Now Text */}
+                  <p className="text-xs uppercase tracking-[0.18em] mt-2 opacity-80 text-white font-medium transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-1" style={{ color: '#4CC157', fontFamily: 'Inter, sans-serif', fontWeight: '700' }}
+                  >
+                    Shop now →
+                  </p>
+
                 </div>
               </Link>
             </Reveal>
@@ -115,7 +135,7 @@ function HomePage() {
       </section>
 
       {/* Why choose us */}
-      <section className="bg-bone py-24 border-y">
+      <section className="bg-black py-16 border-y">
         <div className="container-x grid md:grid-cols-3 gap-12">
           {[
             { n: "01", t: "Made slowly, on purpose", b: "We commission small batches with makers we trust. Nothing is mass-produced." },
@@ -124,15 +144,15 @@ function HomePage() {
           ].map((b, i) => (
             <Reveal key={b.n} delay={i * 0.08}>
               <p className="font-display text-5xl text-primary">{b.n}</p>
-              <h3 className="font-display text-2xl mt-4">{b.t}</h3>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{b.b}</p>
+              <h3 className="font-display text-2xl mt-4 text-white">{b.t}</h3>
+              <p className="mt-3 text-sm text-white leading-relaxed">{b.b}</p>
             </Reveal>
           ))}
         </div>
       </section>
 
       {/* Reviews */}
-      <section className="container-x py-24">
+      {/* <section className="container-x py-24">
         <SectionHeader eyebrow="From the post" title="Loved by 12,000+ homes." align="center" />
         <div className="mt-14 grid md:grid-cols-3 gap-8">
           {[
@@ -149,7 +169,7 @@ function HomePage() {
             </Reveal>
           ))}
         </div>
-      </section>
+      </section> */}
 
       {/* Inspiration gallery */}
       <section className="border-t">
@@ -165,7 +185,7 @@ function HomePage() {
             "https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?w=900",
             "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=900",
             "https://images.unsplash.com/photo-1618219740975-d40978bb7378?w=900",
-            "https://images.unsplash.com/photo-1602874801007-aa28b15c5ae3?w=900",
+            "https://images.unsplash.com/photo-1618219740975-d40978bb7378?w=900",
           ].map((src, i) => (
             <motion.div key={src} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.04, duration: 0.6 }} className="aspect-square overflow-hidden">
               <img src={src} alt="" className="h-full w-full object-cover transition-transform duration-[1.2s] hover:scale-110" />
@@ -175,9 +195,19 @@ function HomePage() {
       </section>
 
       {/* Instagram */}
-      <section className="container-x py-24 border-t text-center">
-        <a href="https://instagram.com" className="inline-flex items-center gap-3 eyebrow"><Instagram className="h-4 w-4" /> @granddecore</a>
-        <h2 className="font-display text-4xl md:text-5xl mt-4">Follow along.</h2>
+      <section className="bg-black text-white border-t border-stone-900 py-10 text-center w-full">
+        <a
+          href="https://instagram.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-stone-400 transition-colors duration-300 hover:text-[#4CC157]"
+        >
+          <Instagram className="h-4 w-4 transition-colors duration-300" />
+          @granddecore
+        </a>
+        <h2 className="font-display text-4xl md:text-5xl mt-4 text-white">
+          Follow along
+        </h2>
       </section>
 
       {/* Featured rail */}
@@ -188,7 +218,7 @@ function HomePage() {
       </section>
 
       {/* Newsletter */}
-      <section className="bg-foreground text-background py-24">
+      {/* <section className="bg-foreground text-background py-24">
         <div className="container-x max-w-2xl text-center">
           <p className="eyebrow" style={{ color: "rgba(255,255,255,0.6)" }}>Join the house</p>
           <h2 className="font-display text-4xl md:text-5xl mt-4">Be the first to see new drops.</h2>
@@ -198,15 +228,15 @@ function HomePage() {
             <button className="bg-background text-foreground px-8 py-4 text-xs uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground">Subscribe</button>
           </form>
         </div>
-      </section>
+      </section> */}
 
       {/* CTA banner */}
       <section className="relative h-[60vh] min-h-[480px] overflow-hidden">
         <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1920" alt="" className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative h-full container-x flex flex-col justify-center items-start text-background max-w-2xl">
-          <p className="eyebrow" style={{ color: "rgba(255,255,255,0.7)" }}>Discover the edit</p>
-          <h2 className="font-display text-5xl md:text-7xl mt-4 leading-[1.05]">A house<br/>for the considered.</h2>
+          <p className="eyebrow" style={{ color: "#4CC157" }}>Discover the edit</p>
+          <h2 className="font-display text-5xl md:text-7xl mt-4 leading-[1.05]">A house<br />for the considered.</h2>
           <Link to="/shop" className="mt-10 bg-background text-foreground px-8 py-4 text-xs uppercase tracking-[0.2em] hover:bg-primary hover:text-primary-foreground">Shop everything →</Link>
         </div>
       </section>

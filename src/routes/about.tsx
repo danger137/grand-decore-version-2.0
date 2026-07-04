@@ -28,7 +28,7 @@ function AboutPage() {
 
       <section className="container-x py-24 grid lg:grid-cols-2 gap-16 items-center">
         <Reveal>
-          <p className="eyebrow">Our story</p>
+          <p className="eyebrow" style={{ color: "#4CC157" }}>Our story</p>
           <h2 className="font-display text-4xl md:text-5xl mt-3 leading-tight">A house built on patience and craft.</h2>
           <div className="mt-6 space-y-4 text-muted-foreground leading-relaxed">
             <p>GrandDecore began as a small studio in Lahore in 2019, born out of a frustration that beautifully-made home objects were either painfully expensive or carelessly mass-produced — never in between.</p>
@@ -44,7 +44,7 @@ function AboutPage() {
         </Reveal>
       </section>
 
-      <section className="bg-bone border-y py-24">
+      <section className="bg-[#000] border-y border-stone-800 py-20">
         <div className="container-x grid md:grid-cols-3 gap-12">
           {[
             { n: "01", t: "Material first", b: "Travertine, alabaster, brass, hand-blown glass, Belgian linen. Real materials, honestly used." },
@@ -53,16 +53,22 @@ function AboutPage() {
           ].map((b) => (
             <Reveal key={b.n}>
               <p className="font-display text-5xl text-primary">{b.n}</p>
-              <h3 className="font-display text-2xl mt-3">{b.t}</h3>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{b.b}</p>
+              <h3 className="font-display text-2xl mt-3 text-white">{b.t}</h3>
+              <p className="mt-3 text-sm text-stone-300 leading-relaxed">{b.b}</p>
             </Reveal>
           ))}
         </div>
       </section>
 
-      <section className="container-x py-24 text-center">
-        <h2 className="font-display text-4xl md:text-5xl">Visit the edit.</h2>
-        <Link to="/shop" className="mt-8 inline-block bg-foreground text-background px-8 py-4 text-xs uppercase tracking-[0.2em] hover:bg-primary">Shop everything</Link>
+      {/* FIX: Invalid height-[20vh] aur broken spacing ko perfect flex padding logic se center fit kiya */}
+      <section className="container-x py-10 flex flex-col items-center justify-center text-center">
+        <h2 className="font-display text-4xl md:text-5xl leading-none text-foreground">Visit the edit.</h2>
+        <Link
+          to="/shop"
+          className="mt-5 inline-block bg-foreground text-background px-8 py-3 text-xs uppercase tracking-[0.2em] transition-colors duration-300 hover:bg-primary"
+        >
+          Shop everything
+        </Link>
       </section>
     </StoreLayout>
   );

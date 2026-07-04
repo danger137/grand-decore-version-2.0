@@ -27,7 +27,10 @@ export function SectionHeader({
   return (
     <Reveal className={align === "center" ? "text-center max-w-2xl mx-auto" : "max-w-2xl"}>
       {eyebrow && <p className={`eyebrow ${align === "center" ? "justify-center" : ""}`}>{eyebrow}</p>}
-      <h2 className="font-display text-4xl md:text-5xl mt-4 leading-[1.05]">{title}</h2>
+
+      {/* ⬇️ HEADING FONT FAMILY: Yahan 'font-display' ki jagah apni marzi ki font class lagayein (e.g., font-serif) */}
+      <h2 className="font-serif text-4xl md:text-5xl mt-4 leading-[1.05]">{title}</h2>
+
       {subtitle && <p className="mt-4 text-muted-foreground leading-relaxed">{subtitle}</p>}
     </Reveal>
   );
