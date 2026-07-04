@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useSuspenseQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Plus, Edit2, Trash2, X, Upload, Check, Image as ImageIcon, Tag } from "lucide-react";
+import { Plus, Edit2, Trash2, X, Upload, Check, Image as ImageIcon, Tag, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -120,10 +120,37 @@ function AdminProducts() {
                       <p className="font-medium text-foreground">{p.name}</p>
                       <p className="text-xs text-muted-foreground">{p.slug}</p>
                       {Array.isArray(p.variants) && p.variants.length > 0 && (
-                        <div className="flex flex-wrap gap-1 mt-1.5">
-                          {p.variants.map((v: string, idx: number) => (
-                            <span key={idx} className="bg-muted px-1.5 py-0.5 rounded text-[10px] text-muted-foreground font-mono">{v}</span>
-                          ))}
+                        <div className="flex flex-wrap gap-1.5 mt-1.5">
+                          {p.variants.map((v: any, idx: number) => {
+                            const vName = typeof v === 'string' ? v : v.name;
+                            const vPrice = typeof v === 'object' && v.price ? `PKR ${Number(v.price).toLocaleString()}` : null;
+                            const vCompare = typeof v === 'object' && v.comparePrice ? `PKR ${Number(v.comparePrice).toLocaleString()}` : null;
+                            return (
+                              <span key={idx} className="bg-muted border px-2 py-0.5 rounded text-[11px] text-foreground font-medium flex items-center gap-1.5">
+                                <span>{vName}</span>
+                                {vPrice && (
+                                  <span className="text-[10px] text-primary font-mono font-semibold">
+                                    {vPrice} {vCompare && <span className="line-through text-muted-foreground font-normal ml-0.5">{vCompare}</span>}
+                                  </span>
+                                )}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {Array.isArray(p.colors) && p.colors.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {p.colors.map((c: any, idx: number) => {
+                            const cName = typeof c === 'string' ? c : c.name;
+                            const cPrice = typeof c === 'object' && c.price ? `+PKR ${Number(c.price).toLocaleString()}` : null;
+                            return (
+                              <span key={idx} className="bg-primary/10 border border-primary/20 px-2 py-0.5 rounded text-[10px] text-primary font-medium flex items-center gap-1">
+                                {typeof c === 'object' && c.image ? <img src={c.image} alt="" className="w-3.5 h-3.5 rounded-full object-cover inline-block border" /> : <span>🎨</span>}
+                                <span>{cName}</span>
+                                {cPrice && <span className="font-mono font-bold">{cPrice}</span>}
+                              </span>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -181,20 +208,72 @@ function ProductModalForm({
   const [selectedImages, setSelectedImages] = useState<string[]>(
     editing?.images && Array.isArray(editing.images) ? editing.images : []
   );
-  const [selectedVariants, setSelectedVariants] = useState<string[]>(
-    editing?.variants && Array.isArray(editing.variants)
-      ? editing.variants
-      : editing ? [] : ["Small", "Medium", "Large", "XL"]
+  const [selectedVariants, setSelectedVariants] = useState<any[]>(
+    editing?.variants && Array.isArray(editing.variants) && editing.variants.length > 0
+      ? editing.variants.map((v: any) =>
+          typeof v === "string"
+            ? { name: v, price: editing.price?.toString() || "", comparePrice: editing.compare_price?.toString() || "", image: "" }
+            : {
+                name: v.name || "",
+                price: v.price !== undefined && v.price !== null ? v.price.toString() : (editing.price?.toString() || ""),
+                comparePrice: v.comparePrice !== undefined && v.comparePrice !== null ? v.comparePrice.toString() : (v.compare_price !== undefined && v.compare_price !== null ? v.compare_price.toString() : (editing.compare_price?.toString() || "")),
+                image: v.image || "",
+              }
+        )
+      : editing
+      ? []
+      : [
+          { name: "Small", price: "", comparePrice: "", image: "" },
+          { name: "Medium", price: "", comparePrice: "", image: "" },
+          { name: "Large", price: "", comparePrice: "", image: "" },
+          { name: "XL", price: "", comparePrice: "", image: "" },
+        ]
   );
+  const [selectedColors, setSelectedColors] = useState<any[]>(
+    editing?.colors && Array.isArray(editing.colors)
+      ? editing.colors.map((c: any) =>
+          typeof c === "string" ? { name: c, price: "", image: "" } : { name: c.name || "", price: c.price !== undefined && c.price !== null ? c.price.toString() : "", image: c.image || "" }
+        )
+      : editing?.specs?.colors && Array.isArray(editing.specs.colors)
+      ? editing.specs.colors.map((c: any) =>
+          typeof c === "string" ? { name: c, price: "", image: "" } : { name: c.name || "", price: c.price !== undefined && c.price !== null ? c.price.toString() : "", image: c.image || "" }
+        )
+      : []
+  );
+  const [name, setName] = useState(editing?.name || "");
+  const [slug, setSlug] = useState(editing?.slug || "");
+  const [slugModified, setSlugModified] = useState(!!editing);
   const [customImageUrl, setCustomImageUrl] = useState("");
   const [customVariant, setCustomVariant] = useState("");
+  const [customColor, setCustomColor] = useState("");
   const [brokenImages, setBrokenImages] = useState<string[]>([]);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setName(val);
+    if (!slugModified) {
+      setSlug(
+        val
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/^-+|-+$/g, "")
+      );
+    }
+  };
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSlug(e.target.value);
+    setSlugModified(true);
+  };
 
   const submit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
     const data: any = Object.fromEntries(fd.entries());
     if (editing) data.id = editing.id;
+    data.name = name;
+    data.slug = slug;
     data.price = Number(data.price);
     data.comparePrice = data.comparePrice ? Number(data.comparePrice) : null;
     data.inventory = Number(data.inventory);
@@ -203,7 +282,20 @@ function ProductModalForm({
     data.isTrending = data.isTrending === "on";
     data.isBestSeller = data.isBestSeller === "on";
     data.images = selectedImages;
-    data.variants = selectedVariants;
+    data.variants = selectedVariants
+      .map((v) => ({
+        name: (v.name || "").toString().trim(),
+        price: v.price !== "" && v.price !== null && !isNaN(Number(v.price)) ? Number(v.price) : null,
+        comparePrice: v.comparePrice !== "" && v.comparePrice !== null && !isNaN(Number(v.comparePrice)) ? Number(v.comparePrice) : null,
+      }))
+      .filter((v) => v.name !== "");
+    data.colors = selectedColors
+      .map((c) => ({
+        name: (c.name || "").toString().trim(),
+        price: c.price !== "" && c.price !== null && !isNaN(Number(c.price)) ? Number(c.price) : 0,
+        image: c.image || undefined,
+      }))
+      .filter((c) => c.name !== "");
 
     try {
       if (data.specs) data.specs = JSON.parse(data.specs);
@@ -218,11 +310,11 @@ function ProductModalForm({
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Product Name *</label>
-          <input required name="name" defaultValue={editing?.name} placeholder="e.g. Atelier Travertine Vase" className="w-full border-b py-2 focus:outline-none focus:border-foreground transition-colors bg-transparent text-sm mt-1" />
+          <input required name="name" value={name} onChange={handleNameChange} placeholder="e.g. Atelier Travertine Vase" className="w-full border-b py-2 focus:outline-none focus:border-foreground transition-colors bg-transparent text-sm mt-1" />
         </div>
         <div>
           <label className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Slug (URL friendly) *</label>
-          <input required name="slug" defaultValue={editing?.slug} placeholder="e.g. atelier-travertine-vase" className="w-full border-b py-2 focus:outline-none focus:border-foreground transition-colors bg-transparent text-sm mt-1" />
+          <input required name="slug" value={slug} onChange={handleSlugChange} placeholder="e.g. atelier-travertine-vase" className="w-full border-b py-2 focus:outline-none focus:border-foreground transition-colors bg-transparent text-sm mt-1" />
         </div>
       </div>
 
@@ -321,43 +413,14 @@ function ProductModalForm({
             />
           </label>
         </div>
-
-        {allAvailableImages.length > 0 && (
-          <div className="pt-2 border-t mt-3">
-            <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Or click to select from your luxury catalog gallery:</p>
-            <div className="flex flex-wrap gap-2 max-h-36 overflow-y-auto p-1.5 border rounded bg-background">
-              {allAvailableImages.filter((img) => !brokenImages.includes(img)).map((img, idx) => {
-                const isSelected = selectedImages.includes(img);
-                return (
-                  <div
-                    key={idx}
-                    onClick={() => {
-                      if (isSelected) {
-                        setSelectedImages(selectedImages.filter((x) => x !== img));
-                      } else {
-                        setSelectedImages([...selectedImages, img]);
-                      }
-                    }}
-                    className={`cursor-pointer relative w-14 h-14 border rounded overflow-hidden transition-all ${isSelected ? 'ring-2 ring-primary border-primary scale-95 shadow' : 'hover:opacity-80 opacity-70'}`}
-                  >
-                    <img src={img} alt="" className="w-full h-full object-cover" onError={() => setBrokenImages((prev) => prev.includes(img) ? prev : [...prev, img])} />
-                    {isSelected && (
-                      <div className="absolute inset-0 bg-primary/40 flex items-center justify-center">
-                        <Check className="h-4 w-4 text-white drop-shadow" />
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
       </div>
 
-      {/* Interactive Variants & Sizes */}
-      <div className="space-y-3 border p-4 rounded-sm bg-muted/20">
-        <label className="text-xs font-semibold uppercase tracking-widest text-foreground flex items-center justify-between">
-          <span className="flex items-center gap-2"><Tag className="h-4 w-4 text-primary" /> Product Variants / Sizes ({selectedVariants.length})</span>
+      {/* Interactive Variants & Sizes with Per-Size Pricing */}
+      <div className="space-y-4 border p-4 rounded-sm bg-muted/20">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Tag className="h-4 w-4 text-primary" /> Product Sizes & Per-Size Pricing ({selectedVariants.length})
+          </label>
           {selectedVariants.length > 0 && (
             <button
               type="button"
@@ -367,45 +430,92 @@ function ProductModalForm({
               clear all
             </button>
           )}
-        </label>
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Set custom Price and Compare Price for each size (Small, Medium, Large, XL, etc.). Leave price blank to use the default product price.
+        </p>
 
         {selectedVariants.length > 0 ? (
-          <div className="flex flex-wrap gap-2 py-1">
-            {selectedVariants.map((varName, idx) => (
-              <span key={idx} className="inline-flex items-center gap-1.5 bg-foreground text-background px-3 py-1 rounded-sm text-xs uppercase tracking-wider font-medium shadow-sm">
-                {varName}
+          <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+            {selectedVariants.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-2 bg-background p-2.5 border rounded-sm shadow-xs">
+                <div className="w-1/3">
+                  <input
+                    type="text"
+                    value={item.name}
+                    onChange={(e) => {
+                      const copy = [...selectedVariants];
+                      copy[idx] = { ...copy[idx], name: e.target.value };
+                      setSelectedVariants(copy);
+                    }}
+                    placeholder="Size Name (e.g. Small, Medium)"
+                    className="w-full text-xs font-semibold uppercase tracking-wider bg-transparent focus:outline-none border-b py-1 border-transparent focus:border-foreground"
+                  />
+                </div>
+                <div className="w-1/3 flex items-center gap-1 border rounded px-2 py-1 bg-muted/30">
+                  <span className="text-[10px] text-muted-foreground font-mono">PKR</span>
+                  <input
+                    type="number"
+                    value={item.price}
+                    onChange={(e) => {
+                      const copy = [...selectedVariants];
+                      copy[idx] = { ...copy[idx], price: e.target.value };
+                      setSelectedVariants(copy);
+                    }}
+                    placeholder="Price"
+                    className="w-full text-xs bg-transparent focus:outline-none font-medium"
+                  />
+                </div>
+                <div className="w-1/3 flex items-center gap-1 border rounded px-2 py-1 bg-muted/30">
+                  <span className="text-[10px] text-muted-foreground font-mono">Compare</span>
+                  <input
+                    type="number"
+                    value={item.comparePrice}
+                    onChange={(e) => {
+                      const copy = [...selectedVariants];
+                      copy[idx] = { ...copy[idx], comparePrice: e.target.value };
+                      setSelectedVariants(copy);
+                    }}
+                    placeholder="Optional"
+                    className="w-full text-xs bg-transparent focus:outline-none font-medium text-muted-foreground"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={() => setSelectedVariants(selectedVariants.filter((_, i) => i !== idx))}
-                  className="hover:text-destructive transition-colors"
+                  className="p-1 text-muted-foreground hover:text-destructive transition-colors shrink-0"
                   title="Remove variant"
                 >
-                  <X className="h-3.5 w-3.5" />
+                  <X className="h-4 w-4" />
                 </button>
-              </span>
+              </div>
             ))}
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground italic">No sizes/variants selected (default standalone product).</p>
+          <p className="text-xs text-muted-foreground italic py-2">No sizes selected (default standalone product).</p>
         )}
 
         <div>
-          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Quick toggle sizes & options:</p>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Quick toggle sizes:</p>
           <div className="flex flex-wrap gap-1.5">
-            {["Small", "Medium", "Large", "XL", "2XL", "Noir Fig", "Linen Smoke", "Tobacco Rose", "Unframed", "Oak Frame", "Black Frame"].map((v) => {
-              const active = selectedVariants.includes(v);
+            {["Small", "Medium", "Large", "XL", "2XL", "3XL"].map((v) => {
+              const activeIdx = selectedVariants.findIndex((x) => (typeof x === "string" ? x : x.name).toLowerCase() === v.toLowerCase());
+              const active = activeIdx >= 0;
               return (
                 <button
                   type="button"
                   key={v}
                   onClick={() => {
                     if (active) {
-                      setSelectedVariants(selectedVariants.filter((x) => x !== v));
+                      setSelectedVariants(selectedVariants.filter((_, i) => i !== activeIdx));
                     } else {
-                      setSelectedVariants([...selectedVariants, v]);
+                      setSelectedVariants([...selectedVariants, { name: v, price: "", comparePrice: "", image: "" }]);
                     }
                   }}
-                  className={`px-3 py-1 rounded text-[11px] border uppercase tracking-wider transition-all font-medium ${active ? 'bg-primary text-primary-foreground border-primary shadow-sm' : 'bg-background text-muted-foreground hover:border-foreground hover:text-foreground'}`}
+                  className={`px-3 py-1 rounded text-[11px] border uppercase tracking-wider transition-all font-medium ${
+                    active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-muted-foreground hover:border-foreground hover:text-foreground"
+                  }`}
                 >
                   {active ? `✓ ${v}` : `+ ${v}`}
                 </button>
@@ -417,14 +527,15 @@ function ProductModalForm({
         <div className="flex gap-2 pt-1">
           <input
             type="text"
-            placeholder="Type custom variant (e.g. Gold Finish, King Size)..."
+            placeholder="Type custom size (e.g. 500ml, King Size)..."
             value={customVariant}
             onChange={(e) => setCustomVariant(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
-                if (customVariant.trim() && !selectedVariants.includes(customVariant.trim())) {
-                  setSelectedVariants([...selectedVariants, customVariant.trim()]);
+                const clean = customVariant.trim();
+                if (clean && !selectedVariants.some((x) => (typeof x === "string" ? x : x.name).toLowerCase() === clean.toLowerCase())) {
+                  setSelectedVariants([...selectedVariants, { name: clean, price: "", comparePrice: "" }]);
                   setCustomVariant("");
                 }
               }
@@ -434,14 +545,188 @@ function ProductModalForm({
           <button
             type="button"
             onClick={() => {
-              if (customVariant.trim() && !selectedVariants.includes(customVariant.trim())) {
-                setSelectedVariants([...selectedVariants, customVariant.trim()]);
+              const clean = customVariant.trim();
+              if (clean && !selectedVariants.some((x) => (typeof x === "string" ? x : x.name).toLowerCase() === clean.toLowerCase())) {
+                setSelectedVariants([...selectedVariants, { name: clean, price: "", comparePrice: "" }]);
                 setCustomVariant("");
+              }
+            }}
+            className="bg-muted text-foreground border border-input px-4 py-2 text-xs uppercase tracking-wider font-semibold hover:bg-foreground hover:text-background transition-colors"
+          >
+            ADD SIZE
+          </button>
+        </div>
+      </div>
+
+      {/* Color Options & Add-on Pricing */}
+      <div className="space-y-4 border p-4 rounded-sm bg-muted/20">
+        <div className="flex items-center justify-between">
+          <label className="text-xs font-semibold uppercase tracking-widest text-foreground flex items-center gap-2">
+            <Palette className="h-4 w-4 text-primary" /> Color Options & Add-on Pricing ({selectedColors.length})
+          </label>
+          {selectedColors.length > 0 && (
+            <button
+              type="button"
+              onClick={() => setSelectedColors([])}
+              className="text-[10px] text-destructive hover:underline lowercase font-normal"
+            >
+              clear all
+            </button>
+          )}
+        </div>
+
+        <p className="text-xs text-muted-foreground">
+          Add color variations or finishes (e.g. Gold Finish, Rose Gold, Black Frame). Enter any extra add-on price (e.g. 500) that will be added to the size price. Put 0 or leave blank for no extra charge.
+        </p>
+
+        {selectedColors.length > 0 ? (
+          <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+            {selectedColors.map((item, idx) => (
+              <div key={idx} className="flex flex-col gap-2 bg-background p-2.5 border rounded-sm shadow-xs">
+                <div className="flex items-center gap-2">
+                  <div className="relative shrink-0 w-9 h-9 border rounded overflow-hidden bg-muted flex items-center justify-center">
+                    {item.image ? (
+                      <>
+                        <img src={item.image} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const copy = [...selectedColors];
+                            copy[idx] = { ...copy[idx], image: "" };
+                            setSelectedColors(copy);
+                          }}
+                          className="absolute inset-0 bg-black/60 text-white opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity"
+                          title="Remove color image"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    ) : (
+                      <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors" title="Upload Color Image">
+                        <Upload className="h-3.5 w-3.5" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                if (reader.result) {
+                                  const copy = [...selectedColors];
+                                  copy[idx] = { ...copy[idx], image: reader.result as string };
+                                  setSelectedColors(copy);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={(e) => {
+                        const copy = [...selectedColors];
+                        copy[idx] = { ...copy[idx], name: e.target.value };
+                        setSelectedColors(copy);
+                      }}
+                      placeholder="Color / Finish Name (e.g. Gold Finish)"
+                      className="w-full text-xs font-semibold uppercase tracking-wider bg-transparent focus:outline-none border-b py-1 border-transparent focus:border-foreground"
+                    />
+                  </div>
+                  <div className="w-1/3 flex items-center gap-1 border rounded px-2 py-1 bg-muted/30">
+                    <span className="text-[10px] text-muted-foreground font-mono">+ PKR</span>
+                    <input
+                      type="number"
+                      value={item.price}
+                      onChange={(e) => {
+                        const copy = [...selectedColors];
+                        copy[idx] = { ...copy[idx], price: e.target.value };
+                        setSelectedColors(copy);
+                      }}
+                      placeholder="Extra Price (0 for standard)"
+                      className="w-full text-xs bg-transparent focus:outline-none font-medium text-primary font-mono"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedColors(selectedColors.filter((_, i) => i !== idx))}
+                    className="p-1 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                    title="Remove color option"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-muted-foreground italic py-2">No color add-ons defined.</p>
+        )}
+
+        <div>
+          <p className="text-[11px] text-muted-foreground uppercase tracking-wider mb-2 font-medium">Quick toggle popular colors & finishes:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {["Standard", "Noir Fig", "Linen Smoke", "Tobacco Rose", "Unframed", "Oak Frame", "Black Frame", "Gold Finish", "Rose Gold", "Matte Black", "Antique Bronze", "Silver Chrome", "Natural Wood", "Walnut Finish"].map((c) => {
+              const activeIdx = selectedColors.findIndex((x) => x.name.toLowerCase() === c.toLowerCase());
+              const active = activeIdx >= 0;
+              return (
+                <button
+                  type="button"
+                  key={c}
+                  onClick={() => {
+                    if (active) {
+                      setSelectedColors(selectedColors.filter((_, i) => i !== activeIdx));
+                    } else {
+                      setSelectedColors([...selectedColors, { name: c, price: c === "Standard" ? "0" : "", image: "" }]);
+                    }
+                  }}
+                  className={`px-3 py-1 rounded text-[11px] border uppercase tracking-wider transition-all font-medium ${
+                    active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-muted-foreground hover:border-foreground hover:text-foreground"
+                  }`}
+                >
+                  {active ? `✓ ${c}` : `+ ${c}`}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex gap-2 pt-1">
+          <input
+            type="text"
+            placeholder="Type custom color (e.g. Velvet Blue, Glossy White)..."
+            value={customColor}
+            onChange={(e) => setCustomColor(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                const clean = customColor.trim();
+                if (clean && !selectedColors.some((x) => x.name.toLowerCase() === clean.toLowerCase())) {
+                  setSelectedColors([...selectedColors, { name: clean, price: "" }]);
+                  setCustomColor("");
+                }
+              }
+            }}
+            className="flex-1 border px-3 py-2 text-xs rounded-sm focus:outline-none focus:border-foreground bg-background"
+          />
+          <button
+            type="button"
+            onClick={() => {
+              const clean = customColor.trim();
+              if (clean && !selectedColors.some((x) => x.name.toLowerCase() === clean.toLowerCase())) {
+                setSelectedColors([...selectedColors, { name: clean, price: "" }]);
+                setCustomColor("");
               }
             }}
             className="bg-secondary text-secondary-foreground px-3.5 py-2 text-xs uppercase tracking-wider rounded-sm hover:bg-secondary/80 font-medium transition-colors"
           >
-            Add Variant
+            Add Color
           </button>
         </div>
       </div>
