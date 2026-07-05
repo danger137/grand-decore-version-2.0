@@ -2,6 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { Search, ShoppingBag, Heart, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useStore, useCartTotals } from "@/lib/store";
+import logo from "@/assets/lgo.png";
+
 
 const nav = [
   { to: "/", label: "Home" },
@@ -53,8 +55,20 @@ export function Header() {
             ))}
           </nav>
 
-          <Link to="/" className="font-display text-2xl md:text-3xl tracking-tight">
-            Grand<span className="text-primary">Decore</span>
+          <Link to="/" className="flex items-center justify-center gap-2">
+            <img
+              src={logo}
+              alt="GrandDecore Logo"
+              className="h-12 w-auto"
+            />
+
+            <h1
+              className="flex items-center text-[15px] font-semibold"
+              style={{ fontFamily: "inherit", marginTop: "16px" }}
+            >
+              <span className="text-[#4CC157]">Grand</span>
+              <span className="text-black">Decore</span>
+            </h1>
           </Link>
 
           <div className="hidden lg:flex flex-1 items-center justify-end gap-6 text-[12px] uppercase tracking-[0.18em]">
