@@ -31,7 +31,16 @@ export function Footer() {
           {/* Social Icons */}
           <div className="mt-6 flex items-center justify-start gap-3">
             <a
-              href="https://instagram.com"
+              href="https://www.facebook.com/profile.php?id=100064365477178"
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Facebook"
+              className="p-2 border border-stone-700 text-white transition-all duration-300 hover:border-[#4CC157] hover:text-[#4CC157]"
+            >
+              <Facebook className="h-4 w-4" />
+            </a>
+            <a
+              href="https://www.instagram.com/granddecore.store?igsh=Z3JwdjllaHRrbnBo"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Instagram"
@@ -40,18 +49,9 @@ export function Footer() {
               <Instagram className="h-4 w-4" />
             </a>
 
-            <a
-              href="https://facebook.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Facebook"
-              className="p-2 border border-stone-700 text-white transition-all duration-300 hover:border-[#4CC157] hover:text-[#4CC157]"
-            >
-              <Facebook className="h-4 w-4" />
-            </a>
 
             <a
-              href="https://tiktok.com"
+              href="https://www.tiktok.com/@grand.decore?_r=1&_t=ZS-97mEiq7E621"
               target="_blank"
               rel="noopener noreferrer"
               aria-label="TikTok"
