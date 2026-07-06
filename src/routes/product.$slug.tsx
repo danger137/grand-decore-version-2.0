@@ -94,20 +94,27 @@ function ProductPage() {
 
   useEffect(() => { pushRecent(product.id); }, [product.id, pushRecent]);
 
+  // FIXED: variants now also carry their own optional "image" field through,
+  // so a size/variant with its own photo can switch the gallery, just like colors do.
   const variantsList = useMemo(() => {
     let list: any[] = [];
     if (Array.isArray(product.variants) && product.variants.length > 0) {
       list = product.variants.map((v: any) =>
         typeof v === "string"
-          ? { name: v, price: null, comparePrice: null }
-          : { name: v.name, price: v.price !== undefined && v.price !== null ? Number(v.price) : null, comparePrice: v.comparePrice !== undefined && v.comparePrice !== null ? Number(v.comparePrice) : (v.compare_price !== undefined && v.compare_price !== null ? Number(v.compare_price) : null) }
+          ? { name: v, price: null, comparePrice: null, image: null }
+          : {
+            name: v.name,
+            price: v.price !== undefined && v.price !== null ? Number(v.price) : null,
+            comparePrice: v.comparePrice !== undefined && v.comparePrice !== null ? Number(v.comparePrice) : (v.compare_price !== undefined && v.compare_price !== null ? Number(v.compare_price) : null),
+            image: v.image || null,
+          }
       );
     } else {
       const cat = cats.find((c) => c.id === product.category_id);
-      if (cat?.slug === "candles") list = ["Noir Fig", "Linen Smoke", "Tobacco Rose"].map((name) => ({ name, price: null, comparePrice: null }));
-      else if (cat?.slug === "vases" || cat?.slug === "planters") list = ["Small", "Medium", "Large", "XL"].map((name) => ({ name, price: null, comparePrice: null }));
-      else if (cat?.slug === "wall-art") list = ["Unframed", "Oak Frame", "Black Frame"].map((name) => ({ name, price: null, comparePrice: null }));
-      else list = ["Small", "Medium", "Large", "XL"].map((name) => ({ name, price: null, comparePrice: null }));
+      if (cat?.slug === "candles") list = ["Noir Fig", "Linen Smoke", "Tobacco Rose"].map((name) => ({ name, price: null, comparePrice: null, image: null }));
+      else if (cat?.slug === "vases" || cat?.slug === "planters") list = ["Small", "Medium", "Large", "XL"].map((name) => ({ name, price: null, comparePrice: null, image: null }));
+      else if (cat?.slug === "wall-art") list = ["Unframed", "Oak Frame", "Black Frame"].map((name) => ({ name, price: null, comparePrice: null, image: null }));
+      else list = ["Small", "Medium", "Large", "XL"].map((name) => ({ name, price: null, comparePrice: null, image: null }));
     }
     return list;
   }, [product, cats]);
@@ -132,8 +139,15 @@ function ProductPage() {
     return colorsList.find((c: any) => (typeof c === "string" ? c : c.name) === selectedColor) || colorsList[0];
   }, [colorsList, selectedColor]);
 
+  // FIXED: gallery thumbnails now also include each variant's own image (not just color images),
+  // so switching size can bring its photo into the strip and into the main viewer.
   const displayImages = useMemo(() => {
     const list: string[] = Array.isArray(product.images) ? [...product.images] : [];
+    variantsList.forEach((v: any) => {
+      if (v.image && typeof v.image === "string" && !list.includes(v.image)) {
+        list.push(v.image);
+      }
+    });
     colorsList.forEach((c: any) => {
       const img = typeof c === "object" ? c.image : null;
       if (img && typeof img === "string" && !list.includes(img)) {
@@ -141,7 +155,7 @@ function ProductPage() {
       }
     });
     return list.length > 0 ? list : ["/placeholder.jpg"];
-  }, [product.images, colorsList]);
+  }, [product.images, variantsList, colorsList]);
 
   const colorAddonPrice = activeColorObj ? (typeof activeColorObj === "object" && activeColorObj.price ? Number(activeColorObj.price) : 0) : 0;
 
@@ -158,11 +172,16 @@ function ProductPage() {
   const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 5;
   const isWished = wishlist.includes(product.id);
 
+  // FIXED: Add to Bag / Buy Now used to always send product.images[0], ignoring whatever
+  // image was actually being shown for the selected variant/color. Now it sends the image
+  // that's actually on screen, so the cart + order match exactly what the customer picked.
+  const activeDisplayImage = displayImages[activeImg] || displayImages[0] || product.images[0];
+
   const handleAdd = () => {
     const varName = variant || activeVariantObj?.name;
     const colName = selectedColor || (activeColorObj ? (typeof activeColorObj === "string" ? activeColorObj : activeColorObj.name) : undefined);
     const finalVariantName = colName ? `${varName || ""} — ${colName}` : varName;
-    add({ productId: product.id, slug: product.slug, name: product.name, price: totalActivePrice, image: product.images[0], quantity: qty, variant: finalVariantName });
+    add({ productId: product.id, slug: product.slug, name: product.name, price: totalActivePrice, image: activeDisplayImage, quantity: qty, variant: finalVariantName });
     toast.success(`${product.name} (${finalVariantName || ""}) added to bag`);
   };
 
@@ -226,7 +245,7 @@ function ProductPage() {
                 <p className="eyebrow">Select Size / Variant</p>
                 {activeVariantObj?.price && (
                   <span className="text-xs text-primary font-mono font-medium">
-                    {activeVariantObj.name}: {fmtPKR(basePrice)}
+                    {/* {activeVariantObj.name}: {fmtPKR(basePrice)} */}
                   </span>
                 )}
               </div>
@@ -237,75 +256,81 @@ function ProductPage() {
                   return (
                     <button
                       key={v.name}
-                      onClick={() => setVariant(v.name)}
+                      onClick={() => {
+                        setVariant(v.name);
+                        // FIXED: selecting a size now also swaps to that size's own
+                        // photo (when it has one) — previously only colors did this.
+                        if (v.image && typeof v.image === "string") {
+                          const idx = displayImages.indexOf(v.image);
+                          if (idx >= 0) setActiveImg(idx);
+                        }
+                      }}
                       className={`px-4 py-2.5 text-xs uppercase tracking-[0.18em] border flex items-center gap-2 transition-all duration-200 ${isSelected
                         ? "border-foreground bg-foreground text-background font-semibold shadow-md scale-105"
                         : "border-input hover:border-foreground text-muted-foreground hover:text-foreground bg-background"
                         }`}
                     >
                       <span>{v.name}</span>
-                      {v.price && (
-                        <span className={`text-[10px] font-mono font-normal ${isSelected ? "text-background/80" : "text-primary"}`}>
-                          ({fmtPKR(vPrice)})
-                        </span>
-                      )}
                     </button>
                   );
                 })}
               </div>
             </div>
-          )}
+          )
+          }
 
-          {colorsList.length > 0 && (
-            <div className="mt-6">
-              <div className="flex items-center justify-between mb-3">
-                <p className="eyebrow">Select Color / Finish</p>
-                {colorAddonPrice > 0 && (
-                  <span className="text-xs text-primary font-mono font-medium">
-                    + {fmtPKR(colorAddonPrice)}
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-wrap gap-2.5">
-                {colorsList.map((c: any) => {
-                  const cName = typeof c === "string" ? c : c.name;
-                  const cPrice = typeof c === "object" && c.price ? Number(c.price) : 0;
-                  const cImage = typeof c === "object" ? c.image : null;
-                  const isSelected = (selectedColor || (typeof colorsList[0] === "string" ? colorsList[0] : colorsList[0]?.name)) === cName;
-                  return (
-                    <button
-                      key={cName}
-                      onClick={() => {
-                        setSelectedColor(cName);
-                        if (cImage && typeof cImage === "string") {
-                          const idx = displayImages.indexOf(cImage);
-                          if (idx >= 0) setActiveImg(idx);
-                        }
-                      }}
-                      className={`px-4 py-2.5 text-xs uppercase tracking-[0.18em] border flex items-center gap-2 transition-all duration-200 ${isSelected
-                        ? "border-primary bg-primary text-primary-foreground font-semibold shadow-md scale-105"
-                        : "border-input hover:border-foreground text-muted-foreground hover:text-foreground bg-background"
-                        }`}
-                    >
-                      <span className="flex items-center gap-1.5">
-                        {cImage ? (
-                          <img src={cImage} alt="" className="w-4 h-4 rounded-full object-cover border border-foreground/20 shrink-0" />
-                        ) : (
-                          <span className="w-2.5 h-2.5 rounded-full border bg-current inline-block opacity-75"></span>
-                        )}
-                        {cName}
-                      </span>
-                      {cPrice > 0 && (
-                        <span className={`text-[10px] font-mono font-normal ${isSelected ? "text-primary-foreground/80" : "text-primary"}`}>
-                          (+{fmtPKR(cPrice)})
+          {
+            colorsList.length > 0 && (
+              <div className="mt-6">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="eyebrow">Select Color / Finish</p>
+                  {colorAddonPrice > 0 && (
+                    <span className="text-xs text-primary font-mono font-medium">
+                      {/* + {fmtPKR(colorAddonPrice)} */}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2.5">
+                  {colorsList.map((c: any) => {
+                    const cName = typeof c === "string" ? c : c.name;
+                    const cPrice = typeof c === "object" && c.price ? Number(c.price) : 0;
+                    const cImage = typeof c === "object" ? c.image : null;
+                    const isSelected = (selectedColor || (typeof colorsList[0] === "string" ? colorsList[0] : colorsList[0]?.name)) === cName;
+                    return (
+                      <button
+                        key={cName}
+                        onClick={() => {
+                          setSelectedColor(cName);
+                          if (cImage && typeof cImage === "string") {
+                            const idx = displayImages.indexOf(cImage);
+                            if (idx >= 0) setActiveImg(idx);
+                          }
+                        }}
+                        className={`px-4 py-2.5 text-xs uppercase tracking-[0.18em] border flex items-center gap-2 transition-all duration-200 ${isSelected
+                          ? "border-primary bg-primary text-primary-foreground font-semibold shadow-md scale-105"
+                          : "border-input hover:border-foreground text-muted-foreground hover:text-foreground bg-background"
+                          }`}
+                      >
+                        <span className="flex items-center gap-1.5">
+                          {cImage ? (
+                            <img src={cImage} alt="" className="w-4 h-4 rounded-full object-cover border border-foreground/20 shrink-0" />
+                          ) : (
+                            <span className="w-2.5 h-2.5 rounded-full border bg-current inline-block opacity-75"></span>
+                          )}
+                          {cName}
                         </span>
-                      )}
-                    </button>
-                  );
-                })}
+                        {cPrice > 0 && (
+                          <span className={`text-[10px] font-mono font-normal ${isSelected ? "text-primary-foreground/80" : "text-primary"}`}>
+                            (+{fmtPKR(cPrice)})
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          )}
+            )
+          }
 
           <div className="mt-8 flex items-center gap-4">
             <div className="inline-flex items-center border">
@@ -367,11 +392,11 @@ function ProductPage() {
               </div>
             ))}
           </div>
-        </div>
-      </section>
+        </div >
+      </section >
 
       {/* Reviews */}
-      <section className="container-x py-20 border-t">
+      < section className="container-x py-20 border-t" >
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
             <p className="eyebrow">Reviews</p>
@@ -452,87 +477,95 @@ function ProductPage() {
           </Dialog>
         </div>
 
-        {reviews.length === 0 ? (
-          <div className="mt-10 border p-12 text-center text-muted-foreground">
-            <p className="font-display text-xl text-foreground">No reviews yet for this piece.</p>
-            <p className="mt-2 text-sm">Be the first to experience and share your thoughts on the {product.name}.</p>
-            <button onClick={() => setReviewOpen(true)} className="mt-6 inline-block text-xs uppercase tracking-widest link-underline">
-              Write the first review →
-            </button>
-          </div>
-        ) : (
-          <div className="mt-10 grid md:grid-cols-3 gap-6">
-            {reviews.map((r) => {
-              const parsed = parseReviewBody(r.body);
-              return (
-                <Reveal key={r.id}>
-                  <div className="border p-6 h-full flex flex-col justify-between bg-background shadow-xs">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex text-primary">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`h-4 w-4 ${i < r.rating ? "fill-current" : ""}`} />)}</div>
-                        <span className="text-xs font-semibold text-muted-foreground">{r.rating}/5</span>
+        {
+          reviews.length === 0 ? (
+            <div className="mt-10 border p-12 text-center text-muted-foreground">
+              <p className="font-display text-xl text-foreground">No reviews yet for this piece.</p>
+              <p className="mt-2 text-sm">Be the first to experience and share your thoughts on the {product.name}.</p>
+              <button onClick={() => setReviewOpen(true)} className="mt-6 inline-block text-xs uppercase tracking-widest link-underline">
+                Write the first review →
+              </button>
+            </div>
+          ) : (
+            <div className="mt-10 grid md:grid-cols-3 gap-6">
+              {reviews.map((r) => {
+                const parsed = parseReviewBody(r.body);
+                return (
+                  <Reveal key={r.id}>
+                    <div className="border p-6 h-full flex flex-col justify-between bg-background shadow-xs">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <div className="flex text-primary">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`h-4 w-4 ${i < r.rating ? "fill-current" : ""}`} />)}</div>
+                          <span className="text-xs font-semibold text-muted-foreground">{r.rating}/5</span>
+                        </div>
+                        <p className="font-display text-xl mt-4 text-foreground">{r.title}</p>
+                        <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{parsed.text}</p>
+                        {parsed.packageQuality && (
+                          <div className="mt-3 bg-muted/40 border border-muted px-3 py-1.5 rounded text-xs text-foreground flex items-center gap-1.5">
+                            <span className="font-semibold text-primary shrink-0">📦 Packaging:</span>
+                            <span className="line-clamp-1">{parsed.packageQuality}</span>
+                          </div>
+                        )}
+                        {parsed.image && (
+                          <div className="mt-4">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <div className="relative w-20 h-20 rounded border overflow-hidden cursor-pointer group shadow-sm">
+                                  <img src={parsed.image} alt="Customer review photo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
+                                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white font-medium">View</div>
+                                </div>
+                              </DialogTrigger>
+                              <DialogContent className="max-w-xl p-2 bg-background">
+                                <img src={parsed.image} alt="Customer review photo full" className="w-full max-h-[80vh] object-contain rounded mx-auto" />
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        )}
                       </div>
-                      <p className="font-display text-xl mt-4 text-foreground">{r.title}</p>
-                      <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{parsed.text}</p>
-                      {parsed.packageQuality && (
-                        <div className="mt-3 bg-muted/40 border border-muted px-3 py-1.5 rounded text-xs text-foreground flex items-center gap-1.5">
-                          <span className="font-semibold text-primary shrink-0">📦 Packaging:</span>
-                          <span className="line-clamp-1">{parsed.packageQuality}</span>
-                        </div>
-                      )}
-                      {parsed.image && (
-                        <div className="mt-4">
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <div className="relative w-20 h-20 rounded border overflow-hidden cursor-pointer group shadow-sm">
-                                <img src={parsed.image} alt="Customer review photo" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200" />
-                                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[10px] text-white font-medium">View</div>
-                              </div>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-xl p-2 bg-background">
-                              <img src={parsed.image} alt="Customer review photo full" className="w-full max-h-[80vh] object-contain rounded mx-auto" />
-                            </DialogContent>
-                          </Dialog>
-                        </div>
-                      )}
+                      <p className="mt-6 text-xs uppercase tracking-[0.18em] text-muted-foreground font-medium">— {r.customer_name}</p>
                     </div>
-                    <p className="mt-6 text-xs uppercase tracking-[0.18em] text-muted-foreground font-medium">— {r.customer_name}</p>
-                  </div>
-                </Reveal>
-              );
-            })}
-          </div>
-        )}
-      </section>
+                  </Reveal>
+                );
+              })}
+            </div>
+          )
+        }
+      </section >
 
       {/* FBT */}
-      {fbt.length > 0 && (
-        <section className="container-x py-20 border-t">
-          <p className="eyebrow">Frequently bought together</p>
-          <h2 className="font-display text-4xl mt-3">Pairs well with.</h2>
-          <div className="mt-10 grid md:grid-cols-3 gap-6">
-            {fbt.map((p) => (
-              <motion.div key={p.id} whileHover={{ y: -4 }}><ProductCard product={p} /></motion.div>
-            ))}
-          </div>
-        </section>
-      )}
+      {
+        fbt.length > 0 && (
+          <section className="container-x py-20 border-t">
+            <p className="eyebrow">Frequently bought together</p>
+            <h2 className="font-display text-4xl mt-3">Pairs well with.</h2>
+            <div className="mt-10 grid md:grid-cols-3 gap-6">
+              {fbt.map((p) => (
+                <motion.div key={p.id} whileHover={{ y: -4 }}><ProductCard product={p} /></motion.div>
+              ))}
+            </div>
+          </section>
+        )
+      }
 
       {/* Related */}
-      {related.length > 0 && (
-        <section className="container-x py-20 border-t">
-          <p className="eyebrow">More from this collection</p>
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-12">{related.map((p) => <ProductCard key={p.id} product={p} />)}</div>
-        </section>
-      )}
+      {
+        related.length > 0 && (
+          <section className="container-x py-20 border-t">
+            <p className="eyebrow">More from this collection</p>
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-12">{related.map((p) => <ProductCard key={p.id} product={p} />)}</div>
+          </section>
+        )
+      }
 
       {/* Recently viewed */}
-      {recentProducts.length > 0 && (
-        <section className="container-x py-20 border-t">
-          <p className="eyebrow">Recently viewed</p>
-          <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-12">{recentProducts.map((p) => <ProductCard key={p.id} product={p} />)}</div>
-        </section>
-      )}
-    </StoreLayout>
+      {
+        recentProducts.length > 0 && (
+          <section className="container-x py-20 border-t">
+            <p className="eyebrow">Recently viewed</p>
+            <div className="mt-8 grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-12">{recentProducts.map((p) => <ProductCard key={p.id} product={p} />)}</div>
+          </section>
+        )
+      }
+    </StoreLayout >
   );
 }

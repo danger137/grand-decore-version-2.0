@@ -28,25 +28,25 @@ model Category {
 }
 
 model Product {
-  id            String    @id @default(uuid())
-  name          String
-  slug          String    @unique
-  description   String?
-  price         Float
-  comparePrice  Float?
-  categoryId    String?
-  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
-  images        Json      @default("[]")
-  videos        Json      @default("[]")
-  specs         Json      @default("{}")
-  variants      Json      @default("[]")
-  inventory     Int       @default(0)
-  isFeatured    Boolean   @default(false)
-  isNew         Boolean   @default(false)
-  isTrending    Boolean   @default(false)
-  isBestSeller  Boolean   @default(false)
-  createdAt     DateTime  @default(now())
-  reviews       Review[]
+  id           String    @id @default(uuid())
+  name         String
+  slug         String    @unique
+  description  String?
+  price        Float
+  comparePrice Float?
+  categoryId   String?
+  category     Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  images       Json      @default("[]")
+  videos       Json      @default("[]")
+  specs        Json      @default("{}")
+  variants     Json      @default("[]")
+  inventory    Int       @default(0)
+  isFeatured   Boolean   @default(false)
+  isNew        Boolean   @default(false)
+  isTrending   Boolean   @default(false)
+  isBestSeller Boolean   @default(false)
+  createdAt    DateTime  @default(now())
+  reviews      Review[]
 }
 
 model Review {
@@ -61,20 +61,24 @@ model Review {
 }
 
 model Order {
-  id          String   @id @default(uuid())
-  orderNumber String   @unique
-  fullName    String
-  phone       String
-  whatsapp    String?
-  city        String
-  address     String
-  items       Json
-  subtotal    Float
-  shipping    Float    @default(0)
-  total       Float
-  status      String   @default("pending")
-  notes       String?
-  createdAt   DateTime @default(now())
+  id             String   @id @default(uuid())
+  orderNumber    String   @unique
+  fullName       String
+  phone          String
+  whatsapp       String?
+  city           String
+  address        String
+  items          Json
+  subtotal       Float
+  shipping       Float    @default(0)
+  total          Float
+  status         String   @default("pending")
+  notes          String?
+  createdAt      DateTime @default(now())
+  
+  // 🟢 Live Tracking fields safely integrated here
+  courierName    String?
+  trackingNumber String?
 }
 
 model StoreSettings {

@@ -22,20 +22,37 @@ function AdminDashboard() {
   return (
     <div>
       <h1 className="font-display text-3xl">Dashboard</h1>
-      <p className="text-muted-foreground mt-1 mb-8">Overview of your atelier.</p>
+      {/* 🟢 Nichay aik naya helpful summary paragraph add kar diya hai */}
+      <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed">
+        Welcome to your GrandDecore admin control room. Here you can track real-time store performance,
+        monitor your incoming sales revenue, and manage customer orders efficiently to ensure timely deliveries.
+      </p>
 
-      <div className="grid md:grid-cols-3 gap-6">
-        <div className="bg-background border p-6 rounded-sm">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Revenue</p>
-          <p className="font-display text-4xl mt-3">PKR {revenue.toLocaleString()}</p>
+      <div className="grid md:grid-cols-3 gap-6 mt-8">
+        {/* Total Revenue Card */}
+        <div className="bg-background border p-6 rounded-sm shadow-xs">
+          <p className="text-xs uppercase tracking-widest  text-primary font-bold">Total Revenue</p>
+          <p className="font-sans mt-3 text-black">
+            <span className="text-sm font-normal tracking-wide mr-1">PKR</span>
+            <span className="text-2xl font-bold">{revenue.toLocaleString()}</span>
+          </p>
         </div>
+
+        {/* Total Orders Card */}
         <div className="bg-background border p-6 rounded-sm">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Total Orders</p>
-          <p className="font-display text-4xl mt-3">{stats.orders.length}</p>
+          <p className="text-xs uppercase tracking-widest text-[red] font-bold">Total Orders</p>
+          <p className="font-sans text-2xl mt-3 font-bold text-black">
+            {stats.orders.length}
+          </p>
         </div>
+
+        {/* Pending Orders Card */}
         <div className="bg-background border p-6 rounded-sm">
-          <p className="text-xs uppercase tracking-widest text-muted-foreground">Pending Orders</p>
-          <p className="font-display text-4xl mt-3 text-primary">{pendingOrders}</p>
+          <p className="text-xs uppercase tracking-widest text-muted-foreground font-bold">Pending Orders</p>
+          {/* 🟢 Pending orders ka color wapas text-primary kar diya hai */}
+          <p className="font-sans text-2xl mt-3 font-bold text-primary">
+            {pendingOrders}
+          </p>
         </div>
       </div>
     </div>

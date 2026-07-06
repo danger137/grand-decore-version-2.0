@@ -123,10 +123,12 @@ function AdminProducts() {
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
                           {p.variants.map((v: any, idx: number) => {
                             const vName = typeof v === 'string' ? v : v.name;
+                            const vImage = typeof v === 'object' ? v.image : null;
                             const vPrice = typeof v === 'object' && v.price ? `PKR ${Number(v.price).toLocaleString()}` : null;
                             const vCompare = typeof v === 'object' && v.comparePrice ? `PKR ${Number(v.comparePrice).toLocaleString()}` : null;
                             return (
                               <span key={idx} className="bg-muted border px-2 py-0.5 rounded text-[11px] text-foreground font-medium flex items-center gap-1.5">
+                                {vImage ? <img src={vImage} alt="" className="w-3.5 h-3.5 rounded-full object-cover inline-block border" /> : null}
                                 <span>{vName}</span>
                                 {vPrice && (
                                   <span className="text-[10px] text-primary font-mono font-semibold">
@@ -182,7 +184,7 @@ function AdminProducts() {
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-2">
                     <button onClick={() => { setEditing(p); setOpen(true); }} className="p-2 hover:bg-accent rounded-sm transition-colors" title="Edit product"><Edit2 className="h-4 w-4" /></button>
-                    <button onClick={() => { if(confirm("Are you sure you want to delete this product?")) deleteMutation.mutate(p.id) }} className="p-2 hover:bg-destructive/10 text-destructive rounded-sm transition-colors" title="Delete product"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => { if (confirm("Are you sure you want to delete this product?")) deleteMutation.mutate(p.id) }} className="p-2 hover:bg-destructive/10 text-destructive rounded-sm transition-colors" title="Delete product"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </td>
               </tr>
@@ -211,18 +213,18 @@ function ProductModalForm({
   const [selectedVariants, setSelectedVariants] = useState<any[]>(
     editing?.variants && Array.isArray(editing.variants) && editing.variants.length > 0
       ? editing.variants.map((v: any) =>
-          typeof v === "string"
-            ? { name: v, price: editing.price?.toString() || "", comparePrice: editing.compare_price?.toString() || "", image: "" }
-            : {
-                name: v.name || "",
-                price: v.price !== undefined && v.price !== null ? v.price.toString() : (editing.price?.toString() || ""),
-                comparePrice: v.comparePrice !== undefined && v.comparePrice !== null ? v.comparePrice.toString() : (v.compare_price !== undefined && v.compare_price !== null ? v.compare_price.toString() : (editing.compare_price?.toString() || "")),
-                image: v.image || "",
-              }
-        )
+        typeof v === "string"
+          ? { name: v, price: editing.price?.toString() || "", comparePrice: editing.compare_price?.toString() || "", image: "" }
+          : {
+            name: v.name || "",
+            price: v.price !== undefined && v.price !== null ? v.price.toString() : (editing.price?.toString() || ""),
+            comparePrice: v.comparePrice !== undefined && v.comparePrice !== null ? v.comparePrice.toString() : (v.compare_price !== undefined && v.compare_price !== null ? v.compare_price.toString() : (editing.compare_price?.toString() || "")),
+            image: v.image || "",
+          }
+      )
       : editing
-      ? []
-      : [
+        ? []
+        : [
           { name: "Small", price: "", comparePrice: "", image: "" },
           { name: "Medium", price: "", comparePrice: "", image: "" },
           { name: "Large", price: "", comparePrice: "", image: "" },
@@ -232,13 +234,13 @@ function ProductModalForm({
   const [selectedColors, setSelectedColors] = useState<any[]>(
     editing?.colors && Array.isArray(editing.colors)
       ? editing.colors.map((c: any) =>
-          typeof c === "string" ? { name: c, price: "", image: "" } : { name: c.name || "", price: c.price !== undefined && c.price !== null ? c.price.toString() : "", image: c.image || "" }
-        )
+        typeof c === "string" ? { name: c, price: "", image: "" } : { name: c.name || "", price: c.price !== undefined && c.price !== null ? c.price.toString() : "", image: c.image || "" }
+      )
       : editing?.specs?.colors && Array.isArray(editing.specs.colors)
-      ? editing.specs.colors.map((c: any) =>
+        ? editing.specs.colors.map((c: any) =>
           typeof c === "string" ? { name: c, price: "", image: "" } : { name: c.name || "", price: c.price !== undefined && c.price !== null ? c.price.toString() : "", image: c.image || "" }
         )
-      : []
+        : []
   );
   const [name, setName] = useState(editing?.name || "");
   const [slug, setSlug] = useState(editing?.slug || "");
@@ -282,11 +284,15 @@ function ProductModalForm({
     data.isTrending = data.isTrending === "on";
     data.isBestSeller = data.isBestSeller === "on";
     data.images = selectedImages;
+    // FIXED: variant "image" was being silently dropped here before —
+    // the state carried it but the submit payload never included it,
+    // so a variant's own image could never reach the database.
     data.variants = selectedVariants
       .map((v) => ({
         name: (v.name || "").toString().trim(),
         price: v.price !== "" && v.price !== null && !isNaN(Number(v.price)) ? Number(v.price) : null,
         comparePrice: v.comparePrice !== "" && v.comparePrice !== null && !isNaN(Number(v.comparePrice)) ? Number(v.comparePrice) : null,
+        image: v.image || undefined,
       }))
       .filter((v) => v.name !== "");
     data.colors = selectedColors
@@ -351,7 +357,7 @@ function ProductModalForm({
         <label className="text-xs font-semibold uppercase tracking-widest text-foreground flex items-center gap-2">
           <ImageIcon className="h-4 w-4 text-primary" /> Product Images ({selectedImages.length})
         </label>
-        
+
         {selectedImages.filter((img) => !brokenImages.includes(img)).length > 0 && (
           <div className="flex flex-wrap gap-3 py-2">
             {selectedImages.filter((img) => !brokenImages.includes(img)).map((img, idx) => (
@@ -415,7 +421,7 @@ function ProductModalForm({
         </div>
       </div>
 
-      {/* Interactive Variants & Sizes with Per-Size Pricing */}
+      {/* Interactive Variants & Sizes with Per-Size Pricing + Per-Size Image */}
       <div className="space-y-4 border p-4 rounded-sm bg-muted/20">
         <div className="flex items-center justify-between">
           <label className="text-xs font-semibold uppercase tracking-widest text-foreground flex items-center gap-2">
@@ -433,62 +439,108 @@ function ProductModalForm({
         </div>
 
         <p className="text-xs text-muted-foreground">
-          Set custom Price and Compare Price for each size (Small, Medium, Large, XL, etc.). Leave price blank to use the default product price.
+          Set custom Price, Compare Price, and an optional Image for each size (Small, Medium, Large, XL, etc.).
+          Leave price blank to use the default product price. If a size has its own image, the product page will
+          switch to it automatically when that size is selected.
         </p>
 
         {selectedVariants.length > 0 ? (
-          <div className="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+          <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">
             {selectedVariants.map((item, idx) => (
-              <div key={idx} className="flex items-center gap-2 bg-background p-2.5 border rounded-sm shadow-xs">
-                <div className="w-1/3">
-                  <input
-                    type="text"
-                    value={item.name}
-                    onChange={(e) => {
-                      const copy = [...selectedVariants];
-                      copy[idx] = { ...copy[idx], name: e.target.value };
-                      setSelectedVariants(copy);
-                    }}
-                    placeholder="Size Name (e.g. Small, Medium)"
-                    className="w-full text-xs font-semibold uppercase tracking-wider bg-transparent focus:outline-none border-b py-1 border-transparent focus:border-foreground"
-                  />
+              <div key={idx} className="flex flex-col gap-2 bg-background p-2.5 border rounded-sm shadow-xs">
+                <div className="flex items-center gap-2">
+                  <div className="relative shrink-0 w-9 h-9 border rounded overflow-hidden bg-muted flex items-center justify-center">
+                    {item.image ? (
+                      <>
+                        <img src={item.image} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const copy = [...selectedVariants];
+                            copy[idx] = { ...copy[idx], image: "" };
+                            setSelectedVariants(copy);
+                          }}
+                          className="absolute inset-0 bg-black/60 text-white opacity-0 hover:opacity-100 flex items-center justify-center transition-opacity"
+                          title="Remove size image"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </>
+                    ) : (
+                      <label className="cursor-pointer w-full h-full flex flex-col items-center justify-center text-muted-foreground hover:text-primary hover:bg-primary/5 transition-colors" title="Upload image for this size">
+                        <Upload className="h-3.5 w-3.5" />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                if (reader.result) {
+                                  const copy = [...selectedVariants];
+                                  copy[idx] = { ...copy[idx], image: reader.result as string };
+                                  setSelectedVariants(copy);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                    )}
+                  </div>
+                  <div className="w-1/4">
+                    <input
+                      type="text"
+                      value={item.name}
+                      onChange={(e) => {
+                        const copy = [...selectedVariants];
+                        copy[idx] = { ...copy[idx], name: e.target.value };
+                        setSelectedVariants(copy);
+                      }}
+                      placeholder="Size Name"
+                      className="w-full text-xs font-semibold uppercase tracking-wider bg-transparent focus:outline-none border-b py-1 border-transparent focus:border-foreground"
+                    />
+                  </div>
+                  <div className="flex-1 flex items-center gap-1 border rounded px-2 py-1 bg-muted/30">
+                    <span className="text-[10px] text-muted-foreground font-mono">PKR</span>
+                    <input
+                      type="number"
+                      value={item.price}
+                      onChange={(e) => {
+                        const copy = [...selectedVariants];
+                        copy[idx] = { ...copy[idx], price: e.target.value };
+                        setSelectedVariants(copy);
+                      }}
+                      placeholder="Price"
+                      className="w-full text-xs bg-transparent focus:outline-none font-medium"
+                    />
+                  </div>
+                  <div className="flex-1 flex items-center gap-1 border rounded px-2 py-1 bg-muted/30">
+                    <span className="text-[10px] text-muted-foreground font-mono">Compare</span>
+                    <input
+                      type="number"
+                      value={item.comparePrice}
+                      onChange={(e) => {
+                        const copy = [...selectedVariants];
+                        copy[idx] = { ...copy[idx], comparePrice: e.target.value };
+                        setSelectedVariants(copy);
+                      }}
+                      placeholder="Optional"
+                      className="w-full text-xs bg-transparent focus:outline-none font-medium text-muted-foreground"
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedVariants(selectedVariants.filter((_, i) => i !== idx))}
+                    className="p-1 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                    title="Remove variant"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
                 </div>
-                <div className="w-1/3 flex items-center gap-1 border rounded px-2 py-1 bg-muted/30">
-                  <span className="text-[10px] text-muted-foreground font-mono">PKR</span>
-                  <input
-                    type="number"
-                    value={item.price}
-                    onChange={(e) => {
-                      const copy = [...selectedVariants];
-                      copy[idx] = { ...copy[idx], price: e.target.value };
-                      setSelectedVariants(copy);
-                    }}
-                    placeholder="Price"
-                    className="w-full text-xs bg-transparent focus:outline-none font-medium"
-                  />
-                </div>
-                <div className="w-1/3 flex items-center gap-1 border rounded px-2 py-1 bg-muted/30">
-                  <span className="text-[10px] text-muted-foreground font-mono">Compare</span>
-                  <input
-                    type="number"
-                    value={item.comparePrice}
-                    onChange={(e) => {
-                      const copy = [...selectedVariants];
-                      copy[idx] = { ...copy[idx], comparePrice: e.target.value };
-                      setSelectedVariants(copy);
-                    }}
-                    placeholder="Optional"
-                    className="w-full text-xs bg-transparent focus:outline-none font-medium text-muted-foreground"
-                  />
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedVariants(selectedVariants.filter((_, i) => i !== idx))}
-                  className="p-1 text-muted-foreground hover:text-destructive transition-colors shrink-0"
-                  title="Remove variant"
-                >
-                  <X className="h-4 w-4" />
-                </button>
               </div>
             ))}
           </div>
@@ -513,9 +565,8 @@ function ProductModalForm({
                       setSelectedVariants([...selectedVariants, { name: v, price: "", comparePrice: "", image: "" }]);
                     }
                   }}
-                  className={`px-3 py-1 rounded text-[11px] border uppercase tracking-wider transition-all font-medium ${
-                    active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-muted-foreground hover:border-foreground hover:text-foreground"
-                  }`}
+                  className={`px-3 py-1 rounded text-[11px] border uppercase tracking-wider transition-all font-medium ${active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-muted-foreground hover:border-foreground hover:text-foreground"
+                    }`}
                 >
                   {active ? `✓ ${v}` : `+ ${v}`}
                 </button>
@@ -535,7 +586,7 @@ function ProductModalForm({
                 e.preventDefault();
                 const clean = customVariant.trim();
                 if (clean && !selectedVariants.some((x) => (typeof x === "string" ? x : x.name).toLowerCase() === clean.toLowerCase())) {
-                  setSelectedVariants([...selectedVariants, { name: clean, price: "", comparePrice: "" }]);
+                  setSelectedVariants([...selectedVariants, { name: clean, price: "", comparePrice: "", image: "" }]);
                   setCustomVariant("");
                 }
               }
@@ -547,7 +598,7 @@ function ProductModalForm({
             onClick={() => {
               const clean = customVariant.trim();
               if (clean && !selectedVariants.some((x) => (typeof x === "string" ? x : x.name).toLowerCase() === clean.toLowerCase())) {
-                setSelectedVariants([...selectedVariants, { name: clean, price: "", comparePrice: "" }]);
+                setSelectedVariants([...selectedVariants, { name: clean, price: "", comparePrice: "", image: "" }]);
                 setCustomVariant("");
               }
             }}
@@ -686,9 +737,8 @@ function ProductModalForm({
                       setSelectedColors([...selectedColors, { name: c, price: c === "Standard" ? "0" : "", image: "" }]);
                     }
                   }}
-                  className={`px-3 py-1 rounded text-[11px] border uppercase tracking-wider transition-all font-medium ${
-                    active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-muted-foreground hover:border-foreground hover:text-foreground"
-                  }`}
+                  className={`px-3 py-1 rounded text-[11px] border uppercase tracking-wider transition-all font-medium ${active ? "bg-primary text-primary-foreground border-primary shadow-sm" : "bg-background text-muted-foreground hover:border-foreground hover:text-foreground"
+                    }`}
                 >
                   {active ? `✓ ${c}` : `+ ${c}`}
                 </button>

@@ -22,9 +22,28 @@ function ContactPage() {
     }
     setLoading(true);
     try {
+      // 1. Pehle backend par email send hogi (baki records ke liye)
       await sendContactEmailFn({ data: form });
-      toast.success("Message sent successfully! We will get back to you soon.");
+
+      // 2. 🟢 WhatsApp text message formatting
+      const whatsappNumber = "923238041309";
+      const messageText = `*New Contact Query - GrandDecore*\n\n` +
+        `👤 *Name:* ${form.name}\n` +
+        `✉️ *Email:* ${form.email}\n` +
+        `💬 *Message:* ${form.msg}`;
+
+      // URL encode taake text space aur breaks sahi se whatsapp par jayen
+      const encodedMessage = encodeURIComponent(messageText);
+      const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodedMessage}`;
+
+      toast.success("Message sent successfully! Opening WhatsApp...");
+
+      // Form reset
       setForm({ name: "", email: "", msg: "" });
+
+      // 3. 🟢 Direct WhatsApp link par user ko bhej dena
+      window.open(whatsappUrl, "_blank");
+
     } catch (err) {
       toast.error("Failed to send message. Please try again or contact via WhatsApp.");
       console.error(err);
@@ -52,11 +71,11 @@ function ContactPage() {
             </li>
             <li className="flex items-start gap-4"><Mail className="h-5 w-5 mt-1 text-primary" />
               <div><p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Email</p>
-                <a href="mailto:hello@granddecore.com" className="text-lg link-underline">hello@granddecore.com</a></div>
+                <a href="mailto:granddecore656@gmail.com" className="text-lg link-underline">granddecore656@gmail.com</a></div>
             </li>
             <li className="flex items-start gap-4"><MapPin className="h-5 w-5 mt-1 text-primary" />
               <div><p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Atelier</p>
-                <p className="text-lg">Gulberg, Lahore — by appointment</p></div>
+                <p className="text-lg">Faisalabad , Pakistan</p></div>
             </li>
           </ul>
         </div>
@@ -80,4 +99,3 @@ function ContactPage() {
     </StoreLayout>
   );
 }
-

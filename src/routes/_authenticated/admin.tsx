@@ -1,6 +1,7 @@
 import { createFileRoute, Link, Outlet, useNavigate, useRouterState } from "@tanstack/react-router";
 import { LayoutDashboard, Package, ShoppingCart, Users, Settings, LogOut, ArrowLeft, Star } from "lucide-react";
 import { toast } from "sonner";
+import logoImg from "@/assets/lgo.png";
 
 export const Route = createFileRoute("/_authenticated/admin")({
   head: () => ({ meta: [{ title: "Admin — GrandDecore" }, { name: "robots", content: "noindex" }] }),
@@ -30,8 +31,14 @@ function AdminLayout() {
     <div className="min-h-screen grid lg:grid-cols-[260px_1fr] bg-bone">
       <aside className="border-r bg-background flex flex-col">
         <div className="px-6 py-5 border-b">
-          <Link to="/" className="font-display text-2xl">Grand<span className="text-primary">Decore</span></Link>
-          <p className="eyebrow mt-1">Admin</p>
+          <Link to="/" className="inline-block">
+            <img
+              src={logoImg}
+              alt="GrandDecore Logo"
+              className="h-8 w-auto object-contain"
+            />
+          </Link>
+          <p className="eyebrow mt-1">Admin Dashboard</p>
         </div>
         <nav className="flex-1 p-3 space-y-1">
           {links.map((l) => {

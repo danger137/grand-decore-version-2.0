@@ -78,7 +78,7 @@ export function Footer() {
           { to: "/refund-policy", label: "Refund" },
           { to: "/shipping-policy", label: "Shipping" },
           { to: "/return-policy", label: "Return" },
-          { to: "/cookie-policy", label: "Cookies" },
+          // { to: "/cookie-policy", label: "Cookies" },
           { to: "/terms-and-conditions", label: "Terms" },
         ]} />
       </div>

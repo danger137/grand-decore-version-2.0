@@ -65,8 +65,6 @@ function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-500" />
 
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-background">
-
-                  {/* 🛠️ Aapka exact Green color, Bold Text, aur Smooth Upar-se-Neeche Animation */}
                   <h3
                     className="font-display text-2xl font-extrabold tracking-wide drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]
                          transition-all duration-500 ease-out
@@ -113,7 +111,7 @@ function HomePage() {
           <p className="eyebrow">Our story</p>
           <h2 className="font-display text-4xl md:text-6xl mt-4 leading-[1.05]">A house built on patience, material and craft.</h2>
           <p className="mt-6 text-muted-foreground leading-relaxed max-w-lg">
-            GrandDecore began as a small atelier in Lahore, working with stone carvers, brass smiths and weavers across Pakistan and beyond. Every piece we make is slow on purpose — designed to live with you for years, not seasons.
+            GrandDecore began as a small atelier in Faisalabad, working with stone carvers, brass smiths and weavers across Pakistan and beyond. Every piece we make is slow on purpose — designed to live with you for years, not seasons.
           </p>
           <Link to="/about" className="mt-8 inline-flex items-center gap-3 link-underline text-xs uppercase tracking-[0.18em]">Read the story →</Link>
         </Reveal>
@@ -185,7 +183,7 @@ function HomePage() {
             "https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?w=900",
             "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=900",
             "https://images.unsplash.com/photo-1618219740975-d40978bb7378?w=900",
-            "https://images.unsplash.com/photo-1618219740975-d40978bb7378?w=900",
+            "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=900",
           ].map((src, i) => (
             <motion.div key={src} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.04, duration: 0.6 }} className="aspect-square overflow-hidden">
               <img src={src} alt="" className="h-full w-full object-cover transition-transform duration-[1.2s] hover:scale-110" />
@@ -197,7 +195,7 @@ function HomePage() {
       {/* Instagram */}
       <section className="bg-black text-white border-t border-stone-900 py-10 text-center w-full">
         <a
-          href="https://instagram.com"
+          href="https://www.instagram.com/granddecore.store?igsh=Z3JwdjllaHRrbnBo"
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-3 text-xs uppercase tracking-[0.2em] text-stone-400 transition-colors duration-300 hover:text-[#4CC157]"

@@ -10,7 +10,11 @@ const mapProduct = (p: any) => {
   const revs = p.reviews || [];
   const reviews_count = p._count?.reviews !== undefined ? p._count.reviews : revs.length;
   const avg_rating = revs.length ? (revs.reduce((s: any, r: any) => s + r.rating, 0) / revs.length).toFixed(1) : "0";
-  const compare_price = p.comparePrice && p.comparePrice > p.price ? p.comparePrice : Math.round((p.price * 1.25) / 500) * 500;
+  // FIXED: only use the compare_price that was actually set by the admin.
+  // Previously this fabricated a fake "sale price" (price * 1.25) whenever
+  // comparePrice was empty or <= price, which corrupted prices on every edit
+  // (the fake value got pre-filled into the edit form and re-saved as real).
+  const compare_price = p.comparePrice && p.comparePrice > p.price ? p.comparePrice : null;
   const colors = p.specs && typeof p.specs === 'object' && p.specs.colors && Array.isArray(p.specs.colors) ? p.specs.colors : (p.colors || []);
   return {
     ...p,
@@ -381,4 +385,3 @@ export const adminDeleteReviewFn = createServerFn({ method: "POST" })
     await verifyAdminSession();
     return prisma.review.delete({ where: { id } });
   });
-
