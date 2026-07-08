@@ -210,6 +210,9 @@ function ProductModalForm({
   const [selectedImages, setSelectedImages] = useState<string[]>(
     editing?.images && Array.isArray(editing.images) ? editing.images : []
   );
+  // FIXED: new products used to start with a hardcoded Small/Medium/Large/XL list
+  // even though nobody asked for those sizes. Now a brand-new product starts with
+  // an empty variants list — sizes only appear if you actually add them.
   const [selectedVariants, setSelectedVariants] = useState<any[]>(
     editing?.variants && Array.isArray(editing.variants) && editing.variants.length > 0
       ? editing.variants.map((v: any) =>
@@ -222,14 +225,7 @@ function ProductModalForm({
             image: v.image || "",
           }
       )
-      : editing
-        ? []
-        : [
-          { name: "Small", price: "", comparePrice: "", image: "" },
-          { name: "Medium", price: "", comparePrice: "", image: "" },
-          { name: "Large", price: "", comparePrice: "", image: "" },
-          { name: "XL", price: "", comparePrice: "", image: "" },
-        ]
+      : []
   );
   const [selectedColors, setSelectedColors] = useState<any[]>(
     editing?.colors && Array.isArray(editing.colors)

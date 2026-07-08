@@ -87,7 +87,18 @@ export function Footer() {
       <div className="border-t border-stone-800 bg-stone-950">
         <div className="container-x flex flex-col md:flex-row gap-3 justify-between items-center py-6 text-xs uppercase tracking-[0.18em] text-stone-400">
           <p>© {new Date().getFullYear()} GrandDecore. All rights reserved.</p>
-          <p>Made with care in Pakistan • COD nationwide</p>
+
+          <p>
+            Made with care in Pakistan •{" "}
+            <a
+              href="https://waseemraza.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-[#4CC157] transition-colors duration-300"
+            >
+              Website by WaseemRaza
+            </a>
+          </p>
         </div>
       </div>
     </footer>

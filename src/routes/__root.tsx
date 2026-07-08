@@ -77,11 +77,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "description", content: "GrandDecore curates editorial home decor — sculptural vases, statement lighting, mirrors and textiles for the considered home." },
       { name: "author", content: "GrandDecore" },
       { property: "og:title", content: "GrandDecore — Luxury Home Decor" },
-      { property: "og:description", content: "Editorial home decor for the considered home. Free shipping over PKR 10,000. Cash on Delivery across Pakistan." },
+      { property: "og:description", content: "Editorial home decor for the considered home. Free shipping over All Pakistan. Cash on Delivery across Pakistan." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
     links: [
+      { rel: "icon", type: "image/png", href: "/lgo.png" },
       { rel: "stylesheet", href: appCss },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },

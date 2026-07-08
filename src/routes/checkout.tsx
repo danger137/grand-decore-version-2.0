@@ -18,8 +18,10 @@ function CheckoutPage() {
   const items = useStore((s) => s.items);
   const clearCart = useStore((s) => s.clear);
   const { subtotal } = useCartTotals();
-  const shipping = subtotal >= 10000 || subtotal === 0 ? 0 : 250;
-  const total = subtotal + shipping;
+
+  // Updated logic: Shipping is always 0, total equals subtotal
+  const shipping = 0;
+  const total = subtotal;
 
   const submit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -98,6 +100,7 @@ function CheckoutPage() {
           <h1 className="font-display text-4xl md:text-5xl mt-3">Shipping details.</h1>
 
           <form onSubmit={submit} className="mt-10 space-y-6">
+            {/* Form inputs remain same */}
             <div className="grid sm:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <label className="text-xs uppercase tracking-[0.1em] text-muted-foreground">Full Name *</label>
@@ -158,8 +161,12 @@ function CheckoutPage() {
               </ul>
               <div className="border-t pt-4 space-y-2 text-sm">
                 <div className="flex justify-between text-muted-foreground"><span>Subtotal</span><span>{fmtPKR(subtotal)}</span></div>
-                <div className="flex justify-between text-muted-foreground"><span>Shipping</span><span>{shipping === 0 ? "FREE" : fmtPKR(shipping)}</span></div>
-                <div className="flex justify-between font-display text-lg pt-2 border-t text-foreground"><span>Total</span><span>{fmtPKR(total)}</span></div>
+                {/* Updated UI rendering here */}
+                <div className="flex justify-between text-muted-foreground">
+                  <span>Shipping</span>
+                  <span className="text-muted-foreground">Free Shipping Across Pakistan</span>
+                </div>
+                <div className="flex justify-between font-inter text-lg pt-2 border-t text-foreground"><span>Total</span><span>{fmtPKR(total)}</span></div>
               </div>
             </>
           )}

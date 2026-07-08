@@ -71,7 +71,7 @@ export function CartDrawer() {
             {items.length > 0 && (
               <footer className="border-t px-6 py-5 space-y-4">
                 <div className="flex justify-between text-sm"><span>Subtotal</span><span className="font-medium">{fmtPKR(subtotal)}</span></div>
-                <p className="text-xs text-muted-foreground">Shipping calculated at checkout. Free shipping over PKR 10,000.</p>
+                <p className="text-xs text-muted-foreground">Shipping calculated at checkout. Free shipping over All Pakistan.</p>
                 <Link to="/checkout" onClick={() => setOpen(false)} className="block w-full text-center bg-foreground text-background py-4 text-xs uppercase tracking-[0.18em] hover:bg-primary transition-colors">Checkout</Link>
                 <button onClick={() => setOpen(false)} className="block w-full text-center text-xs uppercase tracking-[0.18em] py-2 link-underline mx-auto">Continue shopping</button>
               </footer>

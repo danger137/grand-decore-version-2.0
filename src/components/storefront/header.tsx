@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useStore, useCartTotals } from "@/lib/store";
 import logo from "@/assets/lgo.png";
 
-
 const nav = [
   { to: "/", label: "Home" },
   { to: "/shop", label: "Shop" },
@@ -16,12 +15,23 @@ const nav = [
 
 export function Header() {
   const setOpen = useStore((s) => s.setOpen);
-  const setWishlistOpen = useStore.getState; // unused, placeholder
-  void setWishlistOpen;
   const wishlist = useStore((s) => s.wishlist);
   const { count } = useCartTotals();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
+
+  const LogoComponent = () => (
+    <Link to="/" onClick={() => setMobileOpen(false)} className="flex items-center justify-center gap-2">
+      <img src={logo} alt="GrandDecore Logo" className="h-12 w-auto" />
+      <h1
+        className="flex items-center text-[15px] font-semibold"
+        style={{ fontFamily: "inherit", marginTop: "16px" }}
+      >
+        <span className="text-[#4CC157]">Grand</span>
+        <span className="text-black">Decore</span>
+      </h1>
+    </Link>
+  );
 
   return (
     <>
@@ -31,7 +41,7 @@ export function Header() {
           <div className="flex whitespace-nowrap animate-marquee py-2">
             {Array.from({ length: 2 }).map((_, i) => (
               <div key={i} className="flex shrink-0 gap-12 px-6 py-3">
-                <span>Free shipping over PKR 10k</span>
+                <span>Free shipping over All Pakistan</span>
                 <span>•</span>
                 <span>Cash on Delivery across Pakistan</span>
                 <span>•</span>
@@ -47,7 +57,9 @@ export function Header() {
 
       <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/75">
         <div className="container-x flex h-20 items-center justify-between">
-          <button onClick={() => setMobileOpen(true)} className="lg:hidden -ml-1 p-2"><Menu className="h-5 w-5" /></button>
+          <button onClick={() => setMobileOpen(true)} className="lg:hidden -ml-1 p-2">
+            <Menu className="h-5 w-5" />
+          </button>
 
           <nav className="hidden lg:flex flex-1 items-center gap-8 text-[12px] uppercase tracking-[0.18em]">
             {nav.slice(0, 3).map((n) => (
@@ -55,21 +67,7 @@ export function Header() {
             ))}
           </nav>
 
-          <Link to="/" className="flex items-center justify-center gap-2">
-            <img
-              src={logo}
-              alt="GrandDecore Logo"
-              className="h-12 w-auto"
-            />
-
-            <h1
-              className="flex items-center text-[15px] font-semibold"
-              style={{ fontFamily: "inherit", marginTop: "16px" }}
-            >
-              <span className="text-[#4CC157]">Grand</span>
-              <span className="text-black">Decore</span>
-            </h1>
-          </Link>
+          <LogoComponent />
 
           <div className="hidden lg:flex flex-1 items-center justify-end gap-6 text-[12px] uppercase tracking-[0.18em]">
             {nav.slice(3).map((n) => (
@@ -78,7 +76,9 @@ export function Header() {
           </div>
 
           <div className="flex items-center gap-1 lg:ml-6">
-            <button onClick={() => setSearchOpen(true)} aria-label="Search" className="p-2 hover:text-primary"><Search className="h-5 w-5" /></button>
+            <button onClick={() => setSearchOpen(true)} aria-label="Search" className="p-2 hover:text-primary">
+              <Search className="h-5 w-5" />
+            </button>
             <Link to="/shop" aria-label="Wishlist" className="p-2 relative hover:text-primary">
               <Heart className="h-5 w-5" />
               {wishlist.length > 0 && <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[10px] w-4 h-4 rounded-full flex items-center justify-center">{wishlist.length}</span>}
@@ -95,12 +95,12 @@ export function Header() {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 bg-background lg:hidden">
           <div className="flex items-center justify-between p-5 border-b">
-            <Link to="/" onClick={() => setMobileOpen(false)} className="font-display text-2xl">Grand<span className="text-primary">Decore</span></Link>
+            <LogoComponent />
             <button onClick={() => setMobileOpen(false)}><X className="h-5 w-5" /></button>
           </div>
           <nav className="flex flex-col p-6 gap-1">
             {nav.map((n) => (
-              <Link key={n.label} to={n.to} onClick={() => setMobileOpen(false)} className="font-display text-3xl py-3 border-b">{n.label}</Link>
+              <Link key={n.label} to={n.to} onClick={() => setMobileOpen(false)} className="font-inherit font-bold text-1xl py-3 border-b">{n.label}</Link>
             ))}
           </nav>
         </div>
