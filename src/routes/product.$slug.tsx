@@ -94,12 +94,13 @@ function ProductPage() {
 
   useEffect(() => { pushRecent(product.id); }, [product.id, pushRecent]);
 
-  // FIXED: variants now also carry their own optional "image" field through,
-  // so a size/variant with its own photo can switch the gallery, just like colors do.
+  // FIXED: previously, any product with an empty "variants" field fell back to a
+  // hardcoded guess (Small/Medium/Large/XL, or candle/wall-art names based on
+  // category) which made every product show sizes it never actually had.
+  // Now: if the product has no variants saved in the admin panel, none are shown.
   const variantsList = useMemo(() => {
-    let list: any[] = [];
     if (Array.isArray(product.variants) && product.variants.length > 0) {
-      list = product.variants.map((v: any) =>
+      return product.variants.map((v: any) =>
         typeof v === "string"
           ? { name: v, price: null, comparePrice: null, image: null }
           : {
@@ -109,15 +110,9 @@ function ProductPage() {
             image: v.image || null,
           }
       );
-    } else {
-      const cat = cats.find((c) => c.id === product.category_id);
-      if (cat?.slug === "candles") list = ["Noir Fig", "Linen Smoke", "Tobacco Rose"].map((name) => ({ name, price: null, comparePrice: null, image: null }));
-      else if (cat?.slug === "vases" || cat?.slug === "planters") list = ["Small", "Medium", "Large", "XL"].map((name) => ({ name, price: null, comparePrice: null, image: null }));
-      else if (cat?.slug === "wall-art") list = ["Unframed", "Oak Frame", "Black Frame"].map((name) => ({ name, price: null, comparePrice: null, image: null }));
-      else list = ["Small", "Medium", "Large", "XL"].map((name) => ({ name, price: null, comparePrice: null, image: null }));
     }
-    return list;
-  }, [product, cats]);
+    return [];
+  }, [product]);
 
   const activeVariantObj = useMemo(() => {
     if (!variantsList.length) return null;
@@ -192,11 +187,11 @@ function ProductPage() {
         <Link to="/" className="hover:text-foreground">Home</Link> / <Link to="/shop" className="hover:text-foreground">Shop</Link> / <span className="text-foreground">{product.name}</span>
       </nav>
 
-      <section className="container-x py-10 grid lg:grid-cols-[1.2fr_1fr] gap-12 lg:gap-20">
+      <section className="container-x py-10 grid lg:grid-cols-[1.2fr_1fr] gap-12 lg:gap-20 overflow-hidden">
         {/* Gallery */}
-        <div className="lg:sticky lg:top-28 self-start">
+        <div className="lg:sticky lg:top-28 self-start w-full max-w-full min-w-0">
           <div
-            className="relative aspect-[4/5] overflow-hidden bg-sand cursor-zoom-in"
+            className="relative w-full max-w-full aspect-[4/5] overflow-hidden bg-sand cursor-zoom-in"
             onMouseEnter={() => setZoom((z) => ({ ...z, active: true }))}
             onMouseLeave={() => setZoom({ active: false, x: 0, y: 0 })}
             onMouseMove={(e) => {
@@ -221,23 +216,23 @@ function ProductPage() {
         </div>
 
         {/* Info */}
-        <div>
+        <div className="min-w-0 w-full max-w-full">
           <p className="eyebrow text-[#4CC157]">{cats.find((c) => c.id === product.category_id)?.name}</p>
-          <h1 className="text-2xl md:text-3xl mt-3 leading-[1.05]" style={{ fontFamily: "inter" }}>{product.name}</h1>
+          <h1 className="text-2xl md:text-2xl mt-3 leading-[1.05] break-words font-[600]" style={{ fontFamily: "revert", }}>{product.name}</h1>
           <div className="mt-4 flex items-center gap-3">
             <div className="flex text-[#E7CB48]">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className={`h-4 w-4 ${i < Math.round(avgRating) ? "fill-current" : ""}`} />)}</div>
             <span className="text-xs text-muted-foreground">{reviews.length} reviews</span>
           </div>
 
           <div className="mt-6 flex items-baseline gap-3 transition-all duration-300">
-            <span className="text-3xl font-display text-foreground">{fmtPKR(totalActivePrice)}</span>
+            <span className="text-3xl text-muted-foregroun" style={{ color: '#000', fontWeight: '600' }}>{fmtPKR(totalActivePrice)}</span>
             {onSale && (<>
               <span className="text-muted-foreground line-through text-lg">{fmtPKR(totalActiveComparePrice!)}</span>
               <span className="text-xs uppercase tracking-[0.18em] bg-primary text-primary-foreground px-2 py-1 font-semibold animate-pulse">Save {fmtPKR(totalActiveComparePrice! - totalActivePrice)}</span>
             </>)}
           </div>
 
-          <p className="mt-6 text-muted-foreground leading-relaxed">{product.description}</p>
+          {/* <p className="mt-6 text-muted-foreground leading-relaxed break-words whitespace-pre-line">{product.description}</p> */}
 
           {variantsList.length > 0 && (
             <div className="mt-8">
@@ -343,8 +338,8 @@ function ProductPage() {
 
           {/* Sticky CTAs */}
           <div className="mt-6 grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 sticky bottom-0 bg-background pt-3 pb-2 z-10">
-            <button onClick={handleAdd} className="bg-foreground text-background py-4 text-xs uppercase tracking-[0.2em] hover:bg-primary transition-colors">Add to Bag</button>
-            <Link to="/checkout" onClick={handleAdd} className="bg-primary text-primary-foreground py-4 text-xs uppercase tracking-[0.2em] text-center hover:opacity-90">Buy Now</Link>
+            <button onClick={handleAdd} className="bg-foreground text-background py-4 text-xs uppercase tracking-[0.2em] hover:bg-primary transition-colors whitespace-nowrap">Add to Bag</button>
+            <Link to="/checkout" onClick={handleAdd} className="bg-primary text-primary-foreground py-4 text-xs uppercase tracking-[0.2em] text-center hover:opacity-90 whitespace-nowrap">Buy Now</Link>
             <button onClick={() => toggleWishlist(product.id)} className="border px-4 py-4" aria-label="Wishlist">
               <Heart className={`h-5 w-5 ${isWished ? "fill-primary text-primary" : ""}`} />
             </button>
@@ -353,7 +348,7 @@ function ProductPage() {
           {/* Trust */}
           <div className="mt-10 grid grid-cols-3 gap-4 text-xs">
             {[
-              { Icon: Truck, t: "Free over PKR 10k" },
+              { Icon: Truck, t: "Free Shipping" },
               { Icon: RotateCcw, t: "30-day returns" },
               { Icon: ShieldCheck, t: "Secure COD" },
             ].map((b) => (
@@ -366,12 +361,18 @@ function ProductPage() {
             {[
               {
                 t: "Specifications", c: (
-                  <ul className="text-sm text-muted-foreground space-y-1">
-                    {Object.entries(product.specs ?? {}).map(([k, v]) => <li key={k}><span className="text-foreground">{k}:</span> {v as string}</li>)}
-                  </ul>
+                  Object.entries(product.specs ?? {}).length > 0 ? (
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      {Object.entries(product.specs ?? {}).map(([k, v]) => <li key={k}><span className="text-foreground">{k}:</span> {v as string}</li>)}
+                    </ul>
+                  ) : (
+                    <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-line">
+                      {product.description || "No specifications listed for this product."}
+                    </p>
+                  )
                 )
               },
-              { t: "Shipping", c: <p className="text-sm text-muted-foreground">Free shipping on orders over PKR 10,000. Standard delivery 3–5 business days nationwide. Cash on Delivery available.</p> },
+              { t: "Shipping", c: <p className="text-sm text-muted-foreground">Free Shipping Across Pakistan. Standard delivery 3–5 business days nationwide. Cash on Delivery available.</p> },
               { t: "Refund & Returns", c: <p className="text-sm text-muted-foreground">30-day no-questions-asked returns. Items must be unused and in original packaging. See full refund policy.</p> },
               {
                 t: "FAQ", c: (

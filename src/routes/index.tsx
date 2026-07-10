@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "GrandDecore — Luxury Home Decor, Hand-Crafted" },
-      { name: "description", content: "Editorial home decor — vases, lighting, mirrors and textiles. Hand-crafted, limited editions. Free shipping over PKR 10,000." },
+      { name: "description", content: "Editorial home decor — vases, lighting, mirrors and textiles. Hand-crafted, limited editions. Free Shipping Across Pakistan." },
       { property: "og:title", content: "GrandDecore — Luxury Home Decor" },
       { property: "og:description", content: "Editorial home decor for the considered home. COD across Pakistan." },
       { property: "og:image", content: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1600" },
@@ -43,7 +43,7 @@ function HomePage() {
         <div className="container-x py-6 grid grid-cols-2 md:grid-cols-4 gap-6 text-xs uppercase tracking-[0.18em] text-muted-foreground">
           {[
             { Icon: Award, label: "Hand-Crafted" },
-            { Icon: Truck, label: "Free Shipping Over PKR 10k" },
+            { Icon: Truck, label: "Free Shipping Across Pakistan" },
             { Icon: ShieldCheck, label: "30-Day Returns" },
             { Icon: Sparkles, label: "Limited Editions" },
           ].map(({ Icon, label }) => (
@@ -183,7 +183,7 @@ function HomePage() {
             "https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?w=900",
             "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=900",
             "https://images.unsplash.com/photo-1618219740975-d40978bb7378?w=900",
-            "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=900",
+            "https://images.pexels.com/photos/5644272/pexels-photo-5644272.jpeg",
           ].map((src, i) => (
             <motion.div key={src} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.04, duration: 0.6 }} className="aspect-square overflow-hidden">
               <img src={src} alt="" className="h-full w-full object-cover transition-transform duration-[1.2s] hover:scale-110" />
