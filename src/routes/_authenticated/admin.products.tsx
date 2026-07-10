@@ -4,6 +4,7 @@ import { Plus, Edit2, Trash2, X, Upload, Check, Image as ImageIcon, Tag, Palette
 import { toast } from "sonner";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { productsQuery, categoriesQuery } from "@/lib/queries";
 import { adminSaveProductFn, adminDeleteProductFn } from "@/lib/api";
 import type { Product } from "@/lib/types";
@@ -23,6 +24,7 @@ function AdminProducts() {
 
   const [editing, setEditing] = useState<Product | null>(null);
   const [open, setOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const curatedImages = [
     "https://images.unsplash.com/photo-1578500494198-246f612d3b3d?w=1400&auto=format&fit=crop&q=80",
@@ -184,7 +186,7 @@ function AdminProducts() {
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end gap-2">
                     <button onClick={() => { setEditing(p); setOpen(true); }} className="p-2 hover:bg-accent rounded-sm transition-colors" title="Edit product"><Edit2 className="h-4 w-4" /></button>
-                    <button onClick={() => { if (confirm("Are you sure you want to delete this product?")) deleteMutation.mutate(p.id) }} className="p-2 hover:bg-destructive/10 text-destructive rounded-sm transition-colors" title="Delete product"><Trash2 className="h-4 w-4" /></button>
+                    <button onClick={() => setDeleteId(p.id)} className="p-2 hover:bg-destructive/10 text-destructive rounded-sm transition-colors" title="Delete product"><Trash2 className="h-4 w-4" /></button>
                   </div>
                 </td>
               </tr>
@@ -192,6 +194,31 @@ function AdminProducts() {
           </tbody>
         </table>
       </div>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(isOpen) => !isOpen && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the product from the catalog.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                if (deleteId) {
+                  deleteMutation.mutate(deleteId);
+                  setDeleteId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

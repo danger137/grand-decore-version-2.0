@@ -363,7 +363,13 @@ function ProductPage() {
                 t: "Specifications", c: (
                   Object.entries(product.specs ?? {}).length > 0 ? (
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      {Object.entries(product.specs ?? {}).map(([k, v]) => <li key={k}><span className="text-foreground">{k}:</span> {v as string}</li>)}
+                      {Object.entries(product.specs ?? {})
+                        .filter(([k]) => k !== "colors")
+                        .map(([k, v]) => (
+                          <li key={k}>
+                            <span className="text-foreground">{k}:</span> {typeof v === "object" ? JSON.stringify(v) : (v as string)}
+                          </li>
+                        ))}
                     </ul>
                   ) : (
                     <p className="text-sm text-muted-foreground leading-relaxed break-words whitespace-pre-line">

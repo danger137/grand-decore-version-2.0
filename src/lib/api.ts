@@ -1,19 +1,36 @@
 import { createServerFn } from "@tanstack/react-start";
-import { prisma } from "./prisma";
+import { osClient, generateId } from "./opensearch";
 import bcrypt from "bcryptjs";
 import { parseCookie as parse } from "cookie";
 import { getRequest } from "@tanstack/react-start/server";
 import nodemailer from "nodemailer";
 
+// Helper to get hits from OpenSearch response
+const getHits = (res: any) => res.body?.hits?.hits?.map((h: any) => ({ ...h._source, id: h._id })) || [];
+
+// General search helper
+async function searchAll(index: string, sortField = "createdAt", sortOrder = "desc") {
+  try {
+    const res = await osClient.search({
+      index,
+      body: {
+        size: 1000,
+        query: { match_all: {} },
+        sort: sortField ? [{ [sortField]: { order: sortOrder, unmapped_type: "date" } }] : []
+      }
+    });
+    return getHits(res);
+  } catch (e: any) {
+    if (e.meta?.statusCode === 404) return [];
+    return [];
+  }
+}
+
 // Mappers for backwards compatibility with existing frontend
-const mapProduct = (p: any) => {
-  const revs = p.reviews || [];
+const mapProduct = (p: any, reviews = []) => {
+  const revs = reviews.filter((r: any) => r.productId === p.id);
   const reviews_count = p._count?.reviews !== undefined ? p._count.reviews : revs.length;
   const avg_rating = revs.length ? (revs.reduce((s: any, r: any) => s + r.rating, 0) / revs.length).toFixed(1) : "0";
-  // FIXED: only use the compare_price that was actually set by the admin.
-  // Previously this fabricated a fake "sale price" (price * 1.25) whenever
-  // comparePrice was empty or <= price, which corrupted prices on every edit
-  // (the fake value got pre-filled into the edit form and re-saved as real).
   const compare_price = p.comparePrice && p.comparePrice > p.price ? p.comparePrice : null;
   const colors = p.specs && typeof p.specs === 'object' && p.specs.colors && Array.isArray(p.specs.colors) ? p.specs.colors : (p.colors || []);
   return {
@@ -31,15 +48,18 @@ const mapProduct = (p: any) => {
   };
 };
 
-const mapReview = (r: any) => ({
-  ...r,
-  product_id: r.productId,
-  customer_name: r.customerName,
-  created_at: r.createdAt,
-  product_name: r.product?.name,
-  product_slug: r.product?.slug,
-  product_image: Array.isArray(r.product?.images) && r.product.images.length > 0 ? r.product.images[0] : undefined,
-});
+const mapReview = (r: any, products = []) => {
+  const product = products.find((p: any) => p.id === r.productId) || {};
+  return {
+    ...r,
+    product_id: r.productId,
+    customer_name: r.customerName,
+    created_at: r.createdAt,
+    product_name: product.name,
+    product_slug: product.slug,
+    product_image: Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : undefined,
+  };
+};
 
 const mapSettings = (s: any) => ({
   ...s,
@@ -49,84 +69,88 @@ const mapSettings = (s: any) => ({
 });
 
 export const getProductsFn = createServerFn({ method: "GET" }).handler(async () => {
-  const products = await prisma.product.findMany({
-    include: {
-      reviews: {
-        select: { rating: true },
-      },
-      _count: {
-        select: { reviews: true },
-      },
-    },
-    orderBy: { createdAt: "desc" }
-  });
-  return products.map(mapProduct);
+  const products = await searchAll("products");
+  const reviews = await searchAll("reviews");
+  return products.map(p => mapProduct(p, reviews));
 });
 
 export const getCategoriesFn = createServerFn({ method: "GET" }).handler(async () => {
-  return prisma.category.findMany({
-    orderBy: { sort: "asc" }
-  });
+  return await searchAll("categories", "sort", "asc");
 });
 
 export const getProductBySlugFn = createServerFn({ method: "GET" })
   .validator((slug: string) => slug)
   .handler(async ({ data: slug }) => {
-    const p = await prisma.product.findUnique({
-      where: { slug },
-      include: {
-        reviews: {
-          select: { rating: true },
-        },
-        _count: {
-          select: { reviews: true },
-        },
-      },
-    });
-    return p ? mapProduct(p) : null;
+    try {
+      const res = await osClient.search({
+        index: "products",
+        body: { query: { term: { "slug.keyword": slug } } }
+      });
+      const hits = getHits(res);
+      if (hits.length === 0) return null;
+      const reviews = await searchAll("reviews");
+      return mapProduct(hits[0], reviews);
+    } catch {
+      return null;
+    }
   });
 
 export const getReviewsFn = createServerFn({ method: "GET" })
   .validator((productId: string) => productId)
   .handler(async ({ data: productId }) => {
-    const r = await prisma.review.findMany({
-      where: { productId },
-      include: {
-        product: { select: { name: true, slug: true, images: true } }
-      },
-      orderBy: { createdAt: "desc" }
-    });
-    return r.map(mapReview);
+    try {
+      const res = await osClient.search({
+        index: "reviews",
+        body: { query: { term: { "productId.keyword": productId } }, sort: [{ createdAt: "desc" }] }
+      });
+      const hits = getHits(res);
+      const products = await searchAll("products");
+      return hits.map(r => mapReview(r, products));
+    } catch {
+      return [];
+    }
   });
 
 export const getSettingsFn = createServerFn({ method: "GET" }).handler(async () => {
-  const s = await prisma.storeSettings.findUnique({ where: { id: 1 } });
-  return s ? mapSettings(s) : null;
+  try {
+    const res = await osClient.get({ index: "settings", id: "1" });
+    return mapSettings({ ...res.body._source, id: res.body._id });
+  } catch {
+    return null;
+  }
 });
 
 export const createOrderFn = createServerFn({ method: "POST" })
   .validator((data: any) => data)
   .handler(async ({ data }) => {
-    let orderNumber = `GD-${Math.floor(100000 + Math.random() * 900000)}`;
-    while (await prisma.order.findUnique({ where: { orderNumber }, select: { id: true } })) {
-      orderNumber = `GD-${Math.floor(100000 + Math.random() * 900000)}`;
-    }
-    const order = await prisma.order.create({
-      data: {
-        ...data,
-        orderNumber
-      }
-    });
+    const orderNumber = `GD-${Math.floor(100000 + Math.random() * 900000)}`;
+    const order = { ...data, orderNumber, status: "pending", createdAt: new Date().toISOString(), id: generateId() };
+    await osClient.index({ index: "orders", id: order.id, body: order, refresh: true });
     return { ...order, created_at: order.createdAt };
   });
 
 export const trackOrderFn = createServerFn({ method: "GET" })
   .validator((data: { orderNumber: string, phone: string }) => data)
   .handler(async ({ data: { orderNumber, phone } }) => {
-    const o = await prisma.order.findFirst({
-      where: { orderNumber, phone }
-    });
-    return o ? { ...o, created_at: o.createdAt } : null;
+    try {
+      const res = await osClient.search({
+        index: "orders",
+        body: {
+          query: {
+            bool: {
+              must: [
+                { term: { "orderNumber.keyword": orderNumber } },
+                { term: { "phone.keyword": phone } }
+              ]
+            }
+          }
+        }
+      });
+      const hits = getHits(res);
+      return hits.length > 0 ? { ...hits[0], created_at: hits[0].createdAt } : null;
+    } catch {
+      return null;
+    }
   });
 
 // Auth & Admin Functions
@@ -158,37 +182,47 @@ export const getAdminSessionFn = createServerFn({ method: "GET" }).handler(async
 export const adminLoginFn = createServerFn({ method: "POST" })
   .validator((data: any) => data)
   .handler(async ({ data: { email, password } }) => {
-    const admin = await prisma.admin.findUnique({ where: { email } });
-    if (!admin) throw new Error("Invalid credentials");
-    const valid = await bcrypt.compare(password, admin.password);
-    if (!valid) throw new Error("Invalid credentials");
-    return { token: process.env.ADMIN_SESSION_SECRET };
+    try {
+      const res = await osClient.search({
+        index: "admins",
+        body: { query: { term: { "email.keyword": email } } }
+      });
+      const hits = getHits(res);
+      if (hits.length === 0) throw new Error("Invalid credentials");
+      const admin = hits[0];
+      const valid = await bcrypt.compare(password, admin.password);
+      if (!valid) throw new Error("Invalid credentials");
+      return { token: process.env.ADMIN_SESSION_SECRET };
+    } catch {
+      throw new Error("Invalid credentials");
+    }
   });
 
 export const getAdminStatsFn = createServerFn({ method: "GET" }).handler(async () => {
   await verifyAdminSession();
-  const orders = await prisma.order.findMany({ select: { total: true, status: true, createdAt: true, phone: true } });
-  const products = await prisma.product.findMany({ select: { id: true } });
+  const orders = await searchAll("orders");
+  const products = await searchAll("products");
   return { orders, products };
 });
 
 export const adminGetOrdersFn = createServerFn({ method: "GET" }).handler(async () => {
   await verifyAdminSession();
-  const orders = await prisma.order.findMany({ orderBy: { createdAt: "desc" } });
-  return orders.map((o) => ({ ...o, created_at: o.createdAt }));
+  const orders = await searchAll("orders");
+  return orders.map((o: any) => ({ ...o, created_at: o.createdAt }));
 });
 
 export const adminUpdateOrderFn = createServerFn({ method: "POST" })
   .validator((data: { id: string, status: string }) => data)
   .handler(async ({ data: { id, status } }) => {
     await verifyAdminSession();
-    return prisma.order.update({ where: { id }, data: { status } });
+    await osClient.update({ index: "orders", id, body: { doc: { status } }, refresh: true });
+    return { id, status };
   });
 
 export const adminGetCustomersFn = createServerFn({ method: "GET" }).handler(async () => {
   await verifyAdminSession();
-  const orders = await prisma.order.findMany({ select: { fullName: true, phone: true, city: true, total: true, createdAt: true } });
-  return orders.map((o) => ({ ...o, created_at: o.createdAt }));
+  const orders = await searchAll("orders");
+  return orders.map((o: any) => ({ ...o, created_at: o.createdAt }));
 });
 
 export const adminSaveProductFn = createServerFn({ method: "POST" })
@@ -196,48 +230,23 @@ export const adminSaveProductFn = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     await verifyAdminSession();
     const {
-      id,
-      slug: inputSlug,
-      category_id, categoryId,
-      compare_price, comparePrice,
-      is_featured, isFeatured,
-      is_new, isNew,
-      is_trending, isTrending,
-      is_best_seller, isBestSeller,
-      colors, color,
-      ...rest
+      id, slug: inputSlug, category_id, categoryId, compare_price, comparePrice,
+      is_featured, isFeatured, is_new, isNew, is_trending, isTrending,
+      is_best_seller, isBestSeller, colors, color, ...rest
     } = data;
 
     let baseSlug = (inputSlug || data.name || "product")
-      .toString()
-      .toLowerCase()
-      .trim()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "");
+      .toString().toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
     if (!baseSlug) baseSlug = `product-${Date.now()}`;
-
-    let finalSlug = baseSlug;
-    let counter = 1;
-    while (true) {
-      const existing = await prisma.product.findUnique({
-        where: { slug: finalSlug },
-        select: { id: true },
-      });
-      if (!existing || existing.id === id) {
-        break;
-      }
-      finalSlug = `${baseSlug}-${counter++}`;
-    }
+    const finalSlug = baseSlug;
 
     const finalCat = category_id || categoryId || null;
     const finalCompare = compare_price || comparePrice || null;
     const currentSpecs: any = typeof rest.specs === "object" && rest.specs !== null ? { ...rest.specs } : (typeof rest.specs === "string" ? JSON.parse(rest.specs || "{}") : {});
-    if (Array.isArray(colors) && colors.length > 0) {
-      currentSpecs.colors = colors;
-    } else {
-      delete currentSpecs.colors;
-    }
-    const mapped: any = {
+    if (Array.isArray(colors) && colors.length > 0) currentSpecs.colors = colors;
+    else delete currentSpecs.colors;
+
+    const mapped = {
       ...rest,
       name: (data.name || "Untitled Product").toString().trim(),
       slug: finalSlug,
@@ -251,11 +260,14 @@ export const adminSaveProductFn = createServerFn({ method: "POST" })
       variants: Array.isArray(data.variants) ? data.variants : [],
       specs: currentSpecs,
     };
+
     if (id) {
-      const updated = await prisma.product.update({ where: { id }, data: mapped });
-      return mapProduct(updated);
+      await osClient.update({ index: "products", id, body: { doc: mapped }, refresh: true });
+      return mapProduct({ ...mapped, id });
     }
-    const created = await prisma.product.create({ data: mapped });
+    const newId = generateId();
+    const created = { ...mapped, id: newId, createdAt: new Date().toISOString() };
+    await osClient.index({ index: "products", id: newId, body: created, refresh: true });
     return mapProduct(created);
   });
 
@@ -263,7 +275,8 @@ export const adminDeleteProductFn = createServerFn({ method: "POST" })
   .validator((id: string) => id)
   .handler(async ({ data: id }) => {
     await verifyAdminSession();
-    return prisma.product.delete({ where: { id } });
+    await osClient.delete({ index: "products", id, refresh: true });
+    return { id };
   });
 
 export const adminSaveSettingsFn = createServerFn({ method: "POST" })
@@ -277,8 +290,8 @@ export const adminSaveSettingsFn = createServerFn({ method: "POST" })
       shippingFee: Number(shipping_fee),
       freeShippingOver: Number(free_shipping_over),
     };
-    const updated = await prisma.storeSettings.update({ where: { id: 1 }, data: mapped });
-    return mapSettings(updated);
+    await osClient.index({ index: "settings", id: "1", body: mapped, refresh: true });
+    return mapSettings({ ...mapped, id: "1" });
   });
 
 export const sendContactEmailFn = createServerFn({ method: "POST" })
@@ -298,16 +311,6 @@ export const sendContactEmailFn = createServerFn({ method: "POST" })
       replyTo: email || "salmanshah927007@gmail.com",
       subject: `New Contact Message from ${name} — GrandDecore`,
       text: `Name: ${name}\nEmail: ${email}\n\nMessage:\n${msg}`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 8px;">
-          <h2 style="color: #333; border-bottom: 2px solid #333; padding-bottom: 10px;">New Message from GrandDecore Store</h2>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
-          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-          <h3 style="color: #555;">Message:</h3>
-          <p style="background: #f9f9f9; padding: 15px; border-radius: 6px; white-space: pre-wrap; line-height: 1.5;">${msg}</p>
-        </div>
-      `,
     });
 
     return { success: true };
@@ -318,7 +321,7 @@ export const checkIsAdminDomainFn = createServerFn({ method: "GET" }).handler(as
     const req = getRequest();
     const host = req.headers.get("host") || "";
     return host.startsWith("admin.") || host.includes("admin.granddecore.store");
-  } catch (e) {
+  } catch {
     return false;
   }
 });
@@ -326,30 +329,25 @@ export const checkIsAdminDomainFn = createServerFn({ method: "GET" }).handler(as
 export const createReviewFn = createServerFn({ method: "POST" })
   .validator((data: { productId: string; customerName: string; rating: number; title?: string; body?: string }) => data)
   .handler(async ({ data }) => {
-    const created = await prisma.review.create({
-      data: {
-        productId: data.productId,
-        customerName: data.customerName,
-        rating: Number(data.rating),
-        title: data.title || null,
-        body: data.body || null,
-      },
-      include: {
-        product: { select: { name: true, slug: true, images: true } }
-      }
-    });
-    return mapReview(created);
+    const created = {
+      id: generateId(),
+      productId: data.productId,
+      customerName: data.customerName,
+      rating: Number(data.rating),
+      title: data.title || null,
+      body: data.body || null,
+      createdAt: new Date().toISOString()
+    };
+    await osClient.index({ index: "reviews", id: created.id, body: created, refresh: true });
+    const products = await searchAll("products");
+    return mapReview(created, products);
   });
 
 export const adminGetReviewsFn = createServerFn({ method: "GET" }).handler(async () => {
   await verifyAdminSession();
-  const r = await prisma.review.findMany({
-    include: {
-      product: { select: { name: true, slug: true, images: true } }
-    },
-    orderBy: { createdAt: "desc" }
-  });
-  return r.map(mapReview);
+  const reviews = await searchAll("reviews");
+  const products = await searchAll("products");
+  return reviews.map((r: any) => mapReview(r, products));
 });
 
 export const adminSaveReviewFn = createServerFn({ method: "POST" })
@@ -365,23 +363,21 @@ export const adminSaveReviewFn = createServerFn({ method: "POST" })
       body: body || null,
     };
     if (id) {
-      const updated = await prisma.review.update({
-        where: { id },
-        data: mapped,
-        include: { product: { select: { name: true, slug: true, images: true } } }
-      });
-      return mapReview(updated);
+      await osClient.update({ index: "reviews", id, body: { doc: mapped }, refresh: true });
+      const products = await searchAll("products");
+      return mapReview({ ...mapped, id }, products);
     }
-    const created = await prisma.review.create({
-      data: mapped,
-      include: { product: { select: { name: true, slug: true, images: true } } }
-    });
-    return mapReview(created);
+    const newId = generateId();
+    const created = { ...mapped, id: newId, createdAt: new Date().toISOString() };
+    await osClient.index({ index: "reviews", id: newId, body: created, refresh: true });
+    const products = await searchAll("products");
+    return mapReview(created, products);
   });
 
 export const adminDeleteReviewFn = createServerFn({ method: "POST" })
   .validator((id: string) => id)
   .handler(async ({ data: id }) => {
     await verifyAdminSession();
-    return prisma.review.delete({ where: { id } });
+    await osClient.delete({ index: "reviews", id, refresh: true });
+    return { id };
   });
