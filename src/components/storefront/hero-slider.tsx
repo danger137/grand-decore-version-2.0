@@ -2,36 +2,36 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
-type Slide = { video: string; poster: string; eyebrow: string; title: string; subtitle: string; cta: { to: string; label: string } };
+// Sirf image ka structure rakha hai
+type Slide = { image: string; eyebrow: string; title: string; subtitle: string; cta: { to: string; label: string } };
 
 const slides: Slide[] = [
   {
-    video: "/video/video1.mp4",
-    poster: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=1920",
+    image: "https://images.pexels.com/photos/12804226/pexels-photo-12804226.jpeg",
     eyebrow: "HAND-CRAFTED",
     title: "For The Considered\nHome",
     subtitle: "Limited-edition pieces, made slowly and shipped across Pakistan.",
     cta: { to: "/shop", label: "SHOP THE EDIT" },
   },
   {
-    video: "/video/video2.mp4",
-    poster: "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1920",
+    image: "https://images.pexels.com/photos/34553742/pexels-photo-34553742.jpeg",
     eyebrow: "LIGHTING COLLECTION",
     title: "Sculpted Light,\nQuiet Drama",
     subtitle: "Alabaster, brass and hand-blown glass — designed to glow.",
     cta: { to: "/shop", label: "DISCOVER LIGHTING" },
   },
   {
-    video: "/video/video3.mp4",
-    poster: "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=1920",
+    image: "https://images.pexels.com/photos/7511701/pexels-photo-7511701.jpeg",
     eyebrow: "LIMITED DROP",
     title: "The Vessel Series\nIn Travertine",
     subtitle: "Twelve sculptural vases. Hand-carved. Numbered.",
     cta: { to: "/shop", label: "VIEW SERIES" },
   },
 ];
+
 export function HeroSlider() {
   const [i, setI] = useState(0);
+
   useEffect(() => {
     const t = setInterval(() => setI((x) => (x + 1) % slides.length), 7000);
     return () => clearInterval(t);
@@ -50,18 +50,13 @@ export function HeroSlider() {
           transition={{ duration: 1 }}
           className="absolute inset-0"
         >
-          {/* Mobile par object-cover aur object-center video ko stretch kiye bina fit karega */}
-          <video
-            key={s.video}
-            src={s.video}
-            poster={s.poster}
-            autoPlay
-            muted
-            loop
-            playsInline
+          {/* Video tag khatam, sirf image tag */}
+          <img
+            src={s.image}
+            alt="Hero Slide"
             className="h-full w-full object-cover object-center"
           />
-          <div className="absolute inset-0 bg-black/50" />
+          <div className="absolute inset-0 bg-black/40" />
         </motion.div>
       </AnimatePresence>
 
@@ -73,17 +68,19 @@ export function HeroSlider() {
           transition={{ duration: 0.8, delay: 0.2 }}
           className="max-w-2xl text-background"
         >
-          <p className="eyebrow text-[10px] md:text-xs uppercase tracking-[0.2em]" style={{ color: "#4CC157" }}>{s.eyebrow}</p>
-
+          <p className="eyebrow text-[10px] md:text-xs uppercase tracking-[0.2em]" style={{ color: "#4CC157" }}>
+            {s.eyebrow}
+          </p>
           <h1 className="font-display text-4xl md:text-6xl lg:text-7xl mt-2 leading-[1.05] tracking-tight whitespace-pre-line">
             {s.title}
           </h1>
-
           <p className="mt-4 text-sm md:text-lg opacity-85 max-w-sm leading-relaxed">
             {s.subtitle}
           </p>
-
-          <Link to={s.cta.to} className="mt-6 inline-flex items-center gap-3 bg-background text-foreground px-6 py-3 text-[10px] md:text-xs uppercase tracking-[0.2em] hover:bg-primary transition-colors shadow-xl">
+          <Link
+            to={s.cta.to}
+            className="mt-6 inline-flex items-center gap-3 bg-background text-foreground px-6 py-3 text-[10px] md:text-xs uppercase tracking-[0.2em] hover:bg-primary transition-colors shadow-xl"
+          >
             {s.cta.label} →
           </Link>
         </motion.div>
@@ -91,8 +88,11 @@ export function HeroSlider() {
         {/* Indicators */}
         <div className="absolute bottom-8 right-6 md:right-12 flex gap-2">
           {slides.map((_, idx) => (
-            <button key={idx} onClick={() => setI(idx)}
-              className={`h-[2px] transition-all ${idx === i ? "w-10 bg-background" : "w-6 bg-background/40"}`} />
+            <button
+              key={idx}
+              onClick={() => setI(idx)}
+              className={`h-[2px] transition-all ${idx === i ? "w-10 bg-background" : "w-6 bg-background/40"}`}
+            />
           ))}
         </div>
       </div>
