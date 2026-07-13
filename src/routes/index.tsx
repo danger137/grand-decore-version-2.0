@@ -209,7 +209,7 @@ function HomePage() {
       </section>
 
       {/* Featured rail */}
-      <section className="container-x py-12 border-t">
+      <section className="container-x  border-t">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-x-4 gap-y-12">
           {featured.slice(0, 4).map((p) => (<ProductCard key={p.id} product={p} />))}
         </div>
