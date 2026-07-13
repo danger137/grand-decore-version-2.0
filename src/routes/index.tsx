@@ -54,9 +54,9 @@ function HomePage() {
 
       {/* Featured Categories */}
       <section className="container-x py-24">
-        <SectionHeader eyebrow="Shop By Category" title="A house of considered things." subtitle="Eight collections, each made by craftspeople we know by name." />
+        <SectionHeader eyebrow="Shop By Category" title="A house of considered things." subtitle="Beautiful collections, each made by craftspeople we know by name." />
         <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {categories.slice(0, 8).map((c, i) => (
+          {categories.slice(0, 12).map((c, i) => (
             <Reveal key={c.id} delay={i * 0.05}>
               <Link to="/shop" search={{ category: c.slug } as never} className="group block relative overflow-hidden bg-sand aspect-[3/4]">
                 <img src={c.image ?? ""} alt={c.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] group-hover:scale-110" />

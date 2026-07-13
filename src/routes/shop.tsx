@@ -71,7 +71,7 @@ function ShopPage() {
       <section className="container-x pt-16 pb-12 border-b">
         <p className="eyebrow">The Edit</p>
         <h1 className="font-display text-5xl md:text-7xl mt-3">Shop everything.</h1>
-        <p className="mt-4 text-muted-foreground max-w-xl">{filtered.length} pieces, hand-picked across eight collections.</p>
+        <p className="mt-4 text-muted-foreground max-w-xl">{filtered.length} pieces, hand-picked across our collections.</p>
       </section>
 
       <div className="container-x py-12 grid lg:grid-cols-[260px_1fr] gap-12">
