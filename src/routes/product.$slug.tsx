@@ -189,29 +189,44 @@ function ProductPage() {
 
       <section className="container-x py-10 grid lg:grid-cols-[1.2fr_1fr] gap-12 lg:gap-20 overflow-hidden">
         {/* Gallery */}
-        <div className="lg:sticky lg:top-28 self-start w-full max-w-full min-w-0">
-          <div
-            className="relative w-full max-w-full aspect-[4/5] overflow-hidden bg-sand cursor-zoom-in"
-            onMouseEnter={() => setZoom((z) => ({ ...z, active: true }))}
-            onMouseLeave={() => setZoom({ active: false, x: 0, y: 0 })}
-            onMouseMove={(e) => {
-              const r = e.currentTarget.getBoundingClientRect();
-              setZoom({ active: true, x: ((e.clientX - r.left) / r.width) * 100, y: ((e.clientY - r.top) / r.height) * 100 });
-            }}
-          >
-            <img
-              src={displayImages[activeImg] || displayImages[0]}
-              alt={product.name}
-              className="absolute inset-0 h-full w-full object-cover transition-transform duration-300"
-              style={zoom.active ? { transformOrigin: `${zoom.x}% ${zoom.y}%`, transform: "scale(1.6)" } : {}}
-            />
-          </div>
-          <div className="mt-4 flex gap-3 overflow-x-auto no-scrollbar">
-            {(displayImages as string[]).map((src: string, i: number) => (
-              <button key={i} onClick={() => setActiveImg(i)} className={`shrink-0 w-20 h-24 overflow-hidden border ${activeImg === i ? "border-foreground" : "border-transparent opacity-70"}`}>
-                <img src={src} alt="" className="h-full w-full object-cover" />
-              </button>
-            ))}
+        <div className="lg:sticky lg:top-1 self-start w-full max-w-full min-w-0 flex flex-col">
+          {/* Main Image Container */}
+          <div className="lg:sticky lg:top-28 self-start w-full flex flex-col">
+            {/* Main Image Container */}
+            <div
+              className="relative w-full h-[400px] lg:h-[400px] overflow-hidden bg-sand rounded-lg cursor-zoom-in"
+              onMouseEnter={() => setZoom((z) => ({ ...z, active: true }))}
+              onMouseLeave={() => setZoom({ active: false, x: 0, y: 0 })}
+              onMouseMove={(e) => {
+                const r = e.currentTarget.getBoundingClientRect();
+                setZoom({
+                  active: true,
+                  x: ((e.clientX - r.left) / r.width) * 100,
+                  y: ((e.clientY - r.top) / r.height) * 100
+                });
+              }}
+            >
+              <img
+                src={displayImages[activeImg] || displayImages[0]}
+                alt={product.name}
+                className="absolute inset-0 h-full w-full object-contain transition-transform duration-300"
+                style={zoom.active ? { transformOrigin: `${zoom.x}% ${zoom.y}%`, transform: "scale(1.8)" } : {}}
+              />
+            </div>
+
+            {/* Thumbnails */}
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+              {(displayImages as string[]).map((src: string, i: number) => (
+                <button
+                  key={i}
+                  onClick={() => setActiveImg(i)}
+                  className={`shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all ${activeImg === i ? "border-black" : "border-transparent opacity-60"
+                    }`}
+                >
+                  <img src={src} alt="" className="h-full w-full object-cover" />
+                </button>
+              ))}
+            </div>
           </div>
         </div>
 

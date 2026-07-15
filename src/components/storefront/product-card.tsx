@@ -110,7 +110,7 @@ export function ProductCard({ product, onQuickView }: { product: Product; onQuic
           <h3 className="text-[20px] font-medium leading-tight" style={{ fontFamily: "inter" }}>{product.name}</h3>
 
           <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-sm">{fmtPKR(product.price)}</span>
+            <span className="text-md font-bold text-primary">{fmtPKR(product.price)}</span>
             {onSale && <span className="text-xs text-muted-foreground line-through">{fmtPKR(product.compare_price!)}</span>}
           </div>
         </div>

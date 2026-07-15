@@ -48,9 +48,21 @@ function AdminOrders() {
     }));
   };
 
+  // "New" ka matlab: order abhi tak "pending" hai, yani abhi tak dekha/process nahi hua
+  const isNewOrder = (status: string) => status === "pending";
+
+  const newOrdersCount = orders.filter((o) => isNewOrder(o.status)).length;
+
   return (
     <div>
-      <h1 className="font-display text-3xl">Orders</h1>
+      <div className="flex items-center gap-3">
+        <h1 className="font-display text-3xl">Orders</h1>
+        {newOrdersCount > 0 && (
+          <span className="bg-red-500 text-white text-xs font-bold px-2.5 py-1 rounded-full animate-pulse">
+            {newOrdersCount} New
+          </span>
+        )}
+      </div>
       <p className="text-muted-foreground mt-1 mb-8">Manage customer orders and dispatch status.</p>
 
       <div className="bg-background border rounded-sm overflow-hidden">
@@ -59,7 +71,7 @@ function AdminOrders() {
             <tr>
               <th className="px-6 py-4 font-medium">Order</th>
               <th className="px-6 py-4 font-medium">Customer</th>
-              <th className="px-6 py-4 font-medium">Date</th>
+              <th className="px-6 py-4 font-medium">Date & Time</th>
               <th className="px-6 py-4 font-medium">Total</th>
               <th className="px-6 py-4 font-medium">Status & Tracking</th>
             </tr>
@@ -71,14 +83,33 @@ function AdminOrders() {
                 id: o.trackingNumber || ""
               };
               const isShippedOrDelivered = o.status === "shipped" || o.status === "delivered";
+              const isNew = isNewOrder(o.status);
+              const orderDate = new Date(o.createdAt || o.created_at);
 
               return (
-                <tr key={o.id} className="hover:bg-muted/50 align-top">
-                  <td className="px-6 py-4">
-                    <p className="font-medium">{o.orderNumber}</p>
-                    <div className="text-xs text-muted-foreground mt-1 space-y-0.5">
+                <tr
+                  key={o.id}
+                  className={`hover:bg-muted/50 align-top ${isNew ? "bg-red-50/60" : ""}`}
+                >
+                  <td className="px-6 py-4 min-w-[240px]">
+                    <div className="flex items-center gap-2">
+                      <p className="font-medium">{o.orderNumber}</p>
+                      {isNew && (
+                        <span className="bg-red-500 text-white text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm animate-pulse">
+                          New
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-muted-foreground mt-2 space-y-2">
                       {Array.isArray(o.items) && o.items.map((i: any, idx: number) => (
-                        <div key={idx}>• {i.quantity || 1}x {i.name}</div>
+                        <div key={idx} className="flex items-center gap-2.5">
+                          <img
+                            src={i.image || "https://placehold.co/100x100?text=No+Image"}
+                            alt={i.name}
+                            className="w-14 h-14 object-cover rounded-sm border shrink-0 bg-muted"
+                          />
+                          <span>{i.quantity || 1}x {i.name}{i.variant ? ` (${i.variant})` : ""}</span>
+                        </div>
                       ))}
                     </div>
                   </td>
@@ -87,7 +118,10 @@ function AdminOrders() {
                     <p className="text-xs text-muted-foreground">{o.city}</p>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {new Date(o.createdAt || o.created_at).toLocaleDateString()}
+                    <p>{orderDate.toLocaleDateString()}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {orderDate.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                    </p>
                   </td>
                   <td className="px-6 py-4 font-mono font-medium">PKR {o.total.toLocaleString()}</td>
                   <td className="px-6 py-4 space-y-3 min-w-[220px]">
