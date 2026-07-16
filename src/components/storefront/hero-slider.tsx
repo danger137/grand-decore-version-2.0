@@ -2,26 +2,30 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, useState } from "react";
 import { Link } from "@tanstack/react-router";
 
-// Sirf image ka structure rakha hai
+// Local images ko import karein
+import hero1 from "@/assets/hero1.avif";
+import hero2 from "@/assets/hero2.avif";
+import hero3 from "@/assets/hero3.avif";
+
 type Slide = { image: string; eyebrow: string; title: string; subtitle: string; cta: { to: string; label: string } };
 
 const slides: Slide[] = [
   {
-    image: "https://images.pexels.com/photos/12804226/pexels-photo-12804226.jpeg",
+    image: hero1, // Yahan import ki hui file use hogi
     eyebrow: "HAND-CRAFTED",
     title: "For The Considered\nHome",
     subtitle: "Limited-edition pieces, made slowly and shipped across Pakistan.",
     cta: { to: "/shop", label: "SHOP THE EDIT" },
   },
   {
-    image: "https://images.pexels.com/photos/34553742/pexels-photo-34553742.jpeg",
+    image: hero2,
     eyebrow: "LIGHTING COLLECTION",
     title: "Sculpted Light,\nQuiet Drama",
     subtitle: "Alabaster, brass and hand-blown glass — designed to glow.",
     cta: { to: "/shop", label: "DISCOVER LIGHTING" },
   },
   {
-    image: "https://images.pexels.com/photos/7511701/pexels-photo-7511701.jpeg",
+    image: hero3,
     eyebrow: "LIMITED DROP",
     title: "The Vessel Series\nIn Travertine",
     subtitle: "Twelve sculptural vases. Hand-carved. Numbered.",
@@ -50,10 +54,10 @@ export function HeroSlider() {
           transition={{ duration: 1 }}
           className="absolute inset-0"
         >
-          {/* Video tag khatam, sirf image tag */}
           <img
             src={s.image}
-            alt="Hero Slide"
+            alt={s.title}
+            loading="eager" // Hero section hai to eager sahi hai
             className="h-full w-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-black/40" />
@@ -85,7 +89,6 @@ export function HeroSlider() {
           </Link>
         </motion.div>
 
-        {/* Indicators */}
         <div className="absolute bottom-8 right-6 md:right-12 flex gap-2">
           {slides.map((_, idx) => (
             <button
