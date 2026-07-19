@@ -4,6 +4,16 @@ import bcrypt from "bcryptjs";
 import { parseCookie as parse } from "cookie";
 import { getRequest } from "@tanstack/react-start/server";
 import nodemailer from "nodemailer";
+import { fallbackProducts, fallbackCategories, fallbackReviews, fallbackSettings } from "./fallback-data";
+
+function withTimeout<T>(promise: Promise<T>, ms = 1500): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`OpenSearch timeout after ${ms}ms`)), ms)
+    ),
+  ]);
+}
 
 // Helper to get hits from OpenSearch response
 const getHits = (res: any) => res.body?.hits?.hits?.map((h: any) => ({ ...h._source, id: h._id })) || [];
@@ -11,17 +21,27 @@ const getHits = (res: any) => res.body?.hits?.hits?.map((h: any) => ({ ...h._sou
 // General search helper
 async function searchAll(index: string, sortField = "createdAt", sortOrder = "desc") {
   try {
-    const res = await osClient.search({
+    const res = await withTimeout(osClient.search({
       index,
       body: {
         size: 1000,
         query: { match_all: {} },
         sort: sortField ? [{ [sortField]: { order: sortOrder, unmapped_type: "date" } }] : []
       }
-    });
-    return getHits(res);
+    }), 1500);
+    const hits = getHits(res);
+    if (hits.length === 0) {
+      if (index === "products") return fallbackProducts;
+      if (index === "categories") return fallbackCategories;
+      if (index === "reviews") return fallbackReviews;
+      if (index === "settings") return [fallbackSettings];
+    }
+    return hits;
   } catch (e: any) {
-    if (e.meta?.statusCode === 404) return [];
+    if (index === "products") return fallbackProducts;
+    if (index === "categories") return fallbackCategories;
+    if (index === "reviews") return fallbackReviews;
+    if (index === "settings") return [fallbackSettings];
     return [];
   }
 }
@@ -82,15 +102,22 @@ export const getProductBySlugFn = createServerFn({ method: "GET" })
   .validator((slug: string) => slug)
   .handler(async ({ data: slug }) => {
     try {
-      const res = await osClient.search({
+      const res = await withTimeout(osClient.search({
         index: "products",
         body: { query: { term: { "slug.keyword": slug } } }
-      });
+      }), 1500);
       const hits = getHits(res);
-      if (hits.length === 0) return null;
       const reviews = await searchAll("reviews");
+      if (hits.length === 0) {
+        const fallback = fallbackProducts.find(p => p.slug === slug);
+        if (fallback) return mapProduct(fallback, reviews);
+        return null;
+      }
       return mapProduct(hits[0], reviews);
     } catch {
+      const reviews = await searchAll("reviews");
+      const fallback = fallbackProducts.find(p => p.slug === slug);
+      if (fallback) return mapProduct(fallback, reviews);
       return null;
     }
   });
@@ -99,24 +126,28 @@ export const getReviewsFn = createServerFn({ method: "GET" })
   .validator((productId: string) => productId)
   .handler(async ({ data: productId }) => {
     try {
-      const res = await osClient.search({
+      const res = await withTimeout(osClient.search({
         index: "reviews",
         body: { query: { term: { "productId.keyword": productId } }, sort: [{ createdAt: "desc" }] }
-      });
+      }), 1500);
       const hits = getHits(res);
       const products = await searchAll("products");
+      if (hits.length === 0) {
+        return fallbackReviews.filter(r => r.productId === productId).map(r => mapReview(r, products));
+      }
       return hits.map(r => mapReview(r, products));
     } catch {
-      return [];
+      const products = await searchAll("products");
+      return fallbackReviews.filter(r => r.productId === productId).map(r => mapReview(r, products));
     }
   });
 
 export const getSettingsFn = createServerFn({ method: "GET" }).handler(async () => {
   try {
-    const res = await osClient.get({ index: "settings", id: "1" });
+    const res = await withTimeout(osClient.get({ index: "settings", id: "1" }), 1500);
     return mapSettings({ ...res.body._source, id: res.body._id });
   } catch {
-    return null;
+    return mapSettings(fallbackSettings);
   }
 });
 

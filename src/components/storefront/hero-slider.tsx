@@ -42,22 +42,27 @@ export function HeroSlider() {
   }, []);
 
   const s = slides[i];
+  const isFirstSlide = i === 0;
 
   return (
     <section className="relative h-[85vh] md:h-[88vh] w-full overflow-hidden bg-black">
       <AnimatePresence mode="sync">
         <motion.div
           key={i}
-          initial={{ opacity: 0 }}
+          initial={{ opacity: isFirstSlide ? 1 : 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 1 }}
+          transition={{ duration: isFirstSlide ? 0 : 1 }}
           className="absolute inset-0"
         >
           <img
             src={s.image}
             alt={s.title}
-            loading="eager" // Hero section hai to eager sahi hai
+            fetchPriority={isFirstSlide ? "high" : "low"}
+            decoding={isFirstSlide ? "sync" : "async"}
+            loading={isFirstSlide ? "eager" : "lazy"}
+            width={1600}
+            height={1067}
             className="h-full w-full object-cover object-center"
           />
           <div className="absolute inset-0 bg-black/40" />

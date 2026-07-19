@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useState } from "react";
 import { useStore } from "@/lib/store";
 import { fmtPKR, type Product } from "@/lib/types";
+import { optimizeImageUrl } from "@/lib/utils";
 import { toast } from "sonner";
 
 export function ProductCard({ product, onQuickView }: { product: Product; onQuickView?: (p: Product) => void }) {
@@ -12,8 +13,9 @@ export function ProductCard({ product, onQuickView }: { product: Product; onQuic
   const add = useStore((s) => s.add);
   const isWished = wishlist.includes(product.id);
   const [hover, setHover] = useState(false);
-  const img1 = product.images[0] ?? "https://placehold.co/800x1000";
-  const img2 = product.images[1] ?? img1;
+  const img1 = optimizeImageUrl(product.images[0], 600, 75);
+  const rawImg2 = product.images[1];
+  const img2 = rawImg2 ? optimizeImageUrl(rawImg2, 600, 75) : img1;
 
   let displayPrice = product.price;
   let displayCompare = product.compare_price;
@@ -51,18 +53,32 @@ export function ProductCard({ product, onQuickView }: { product: Product; onQuic
       <Link to="/product/$slug" params={{ slug: product.slug }} className="block">
         <div className="relative aspect-[4/5] overflow-hidden bg-sand">
           <motion.img
-            src={img1} alt={product.name}
+            src={img1}
+            alt={product.name}
+            loading="lazy"
+            decoding="async"
+            fetchPriority="low"
+            width={600}
+            height={750}
             className="absolute inset-0 h-full w-full object-cover"
-            animate={{ opacity: hover ? 0 : 1, scale: hover ? 1.05 : 1 }}
+            animate={{ opacity: hover && rawImg2 ? 0 : 1, scale: hover ? 1.05 : 1 }}
             transition={{ duration: 0.6 }}
           />
-          <motion.img
-            src={img2} alt=""
-            className="absolute inset-0 h-full w-full object-cover"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: hover ? 1 : 0, scale: hover ? 1.05 : 1 }}
-            transition={{ duration: 0.6 }}
-          />
+          {rawImg2 && rawImg2 !== product.images[0] && (
+            <motion.img
+              src={img2}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              fetchPriority="low"
+              width={600}
+              height={750}
+              className="absolute inset-0 h-full w-full object-cover"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: hover ? 1 : 0, scale: hover ? 1.05 : 1 }}
+              transition={{ duration: 0.6 }}
+            />
+          )}
 
           {/* badges */}
           <div className="absolute top-3 left-3 flex flex-col gap-1.5">

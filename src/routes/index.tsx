@@ -6,6 +6,7 @@ import { HeroSlider } from "@/components/storefront/hero-slider";
 import { Reveal, SectionHeader } from "@/components/storefront/section";
 import { ProductCard } from "@/components/storefront/product-card";
 import { categoriesQuery, productsQuery } from "@/lib/queries";
+import { optimizeImageUrl } from "@/lib/utils";
 import { Award, Truck, ShieldCheck, Sparkles, Instagram, Star } from "lucide-react";
 
 export const Route = createFileRoute("/")({
@@ -59,7 +60,7 @@ function HomePage() {
           {categories.slice(0, 12).map((c, i) => (
             <Reveal key={c.id} delay={i * 0.05}>
               <Link to="/shop" search={{ category: c.slug } as never} className="group block relative overflow-hidden bg-sand aspect-[3/4]">
-                <img src={c.image ?? ""} alt={c.name} className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] group-hover:scale-110" />
+                <img src={optimizeImageUrl(c.image, 500, 75)} alt={c.name} loading="lazy" decoding="async" fetchPriority="low" width={500} height={667} className="absolute inset-0 h-full w-full object-cover transition-transform duration-[1.2s] group-hover:scale-110" />
 
                 {/* Shadow Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent transition-opacity duration-500" />
@@ -104,7 +105,7 @@ function HomePage() {
       <section className="container-x py-24 grid lg:grid-cols-2 gap-12 items-center border-t">
         <Reveal>
           <div className="aspect-[4/5] overflow-hidden">
-            <img src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1400" alt="Atelier" className="h-full w-full object-cover" />
+            <img src="https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=1400&auto=format&q=75" alt="Atelier" loading="lazy" decoding="async" fetchPriority="low" width={1400} height={1750} className="h-full w-full object-cover" />
           </div>
         </Reveal>
         <Reveal delay={0.1}>
@@ -176,17 +177,17 @@ function HomePage() {
         </div>
         <div className="grid grid-cols-2 md:grid-cols-4">
           {[
-            "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=900",
-            "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=900",
-            "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=900",
-            "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=900",
-            "https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?w=900",
-            "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=900",
-            "https://images.unsplash.com/photo-1618219740975-d40978bb7378?w=900",
-            "https://images.pexels.com/photos/5644272/pexels-photo-5644272.jpeg",
+            "https://images.unsplash.com/photo-1616594039964-ae9021a400a0?w=600&auto=format&q=75",
+            "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?w=600&auto=format&q=75",
+            "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=600&auto=format&q=75",
+            "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&auto=format&q=75",
+            "https://images.unsplash.com/photo-1567225557594-88d73e55f2cb?w=600&auto=format&q=75",
+            "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?w=600&auto=format&q=75",
+            "https://images.unsplash.com/photo-1618219740975-d40978bb7378?w=600&auto=format&q=75",
+            "https://images.pexels.com/photos/5644272/pexels-photo-5644272.jpeg?auto=compress&cs=tinysrgb&w=600",
           ].map((src, i) => (
             <motion.div key={src} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.04, duration: 0.6 }} className="aspect-square overflow-hidden">
-              <img src={src} alt="" className="h-full w-full object-cover transition-transform duration-[1.2s] hover:scale-110" />
+              <img src={src} alt="" loading="lazy" decoding="async" fetchPriority="low" width={600} height={600} className="h-full w-full object-cover transition-transform duration-[1.2s] hover:scale-110" />
             </motion.div>
           ))}
         </div>
@@ -230,7 +231,7 @@ function HomePage() {
 
       {/* CTA banner */}
       <section className="relative h-[60vh] min-h-[480px] overflow-hidden">
-        <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1920" alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=1600&auto=format&q=75" alt="" loading="lazy" decoding="async" fetchPriority="low" width={1600} height={960} className="absolute inset-0 h-full w-full object-cover" />
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative h-full container-x flex flex-col justify-center items-start text-background max-w-2xl">
           <p className="eyebrow" style={{ color: "#4CC157" }}>Discover the edit</p>

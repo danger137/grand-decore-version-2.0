@@ -4,7 +4,9 @@ import { Client } from '@opensearch-project/opensearch';
 const osUrl = process.env.OPENSEARCH_URL || "https://avnadmin:AVNS_P2TZrd3sKrabzG7Y-G9@os-8ae6aaf-dangerchamp2-08f5.e.aivencloud.com:16944";
 
 export const osClient = new Client({
-  node: osUrl
+  node: osUrl,
+  requestTimeout: 2000,
+  maxRetries: 0,
 });
 
 // Helper for generating UUIDs
