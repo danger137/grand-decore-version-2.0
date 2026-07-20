@@ -28,7 +28,7 @@ async function searchAll(index: string, sortField = "createdAt", sortOrder = "de
         query: { match_all: {} },
         sort: sortField ? [{ [sortField]: { order: sortOrder, unmapped_type: "date" } }] : []
       }
-    }), 1500);
+    }), 15000);
     const hits = getHits(res);
     if (hits.length === 0) {
       if (index === "products") return fallbackProducts;
@@ -38,6 +38,7 @@ async function searchAll(index: string, sortField = "createdAt", sortOrder = "de
     }
     return hits;
   } catch (e: any) {
+    console.error(`OpenSearch searchAll error for index ${index}:`, e);
     if (index === "products") return fallbackProducts;
     if (index === "categories") return fallbackCategories;
     if (index === "reviews") return fallbackReviews;
