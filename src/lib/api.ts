@@ -224,8 +224,9 @@ export const adminLoginFn = createServerFn({ method: "POST" })
       const valid = await bcrypt.compare(password, admin.password);
       if (!valid) throw new Error("Invalid credentials");
       return { token: process.env.ADMIN_SESSION_SECRET };
-    } catch {
-      throw new Error("Invalid credentials");
+    } catch (err: any) {
+      console.error("ADMIN LOGIN ERROR:", err);
+      throw new Error(err.message || "Invalid credentials");
     }
   });
 
