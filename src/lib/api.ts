@@ -253,6 +253,27 @@ export const adminUpdateOrderFn = createServerFn({ method: "POST" })
     return { id, status };
   });
 
+import { v2 as cloudinary } from "cloudinary";
+
+if (process.env.CLOUDINARY_API_KEY) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+  });
+}
+
+const uploadToCloudinary = async (base64: string) => {
+  if (!base64 || !base64.startsWith("data:image")) return base64;
+  try {
+    const res = await cloudinary.uploader.upload(base64);
+    return res.secure_url;
+  } catch (e) {
+    console.error("Cloudinary upload error:", e);
+    return base64;
+  }
+};
+
 export const adminGetCustomersFn = createServerFn({ method: "GET" }).handler(async () => {
   await verifyAdminSession();
   const orders = await searchAll("orders");
@@ -276,9 +297,25 @@ export const adminSaveProductFn = createServerFn({ method: "POST" })
 
     const finalCat = category_id || categoryId || null;
     const finalCompare = compare_price || comparePrice || null;
+    const images = Array.isArray(data.images) ? data.images : [];
+    for (let i = 0; i < images.length; i++) {
+      images[i] = await uploadToCloudinary(images[i]);
+    }
+
+    const variants = Array.isArray(data.variants) ? data.variants : [];
+    for (let i = 0; i < variants.length; i++) {
+      if (variants[i].image) variants[i].image = await uploadToCloudinary(variants[i].image);
+    }
+
     const currentSpecs: any = typeof rest.specs === "object" && rest.specs !== null ? { ...rest.specs } : (typeof rest.specs === "string" ? JSON.parse(rest.specs || "{}") : {});
-    if (Array.isArray(colors) && colors.length > 0) currentSpecs.colors = colors;
-    else delete currentSpecs.colors;
+    if (Array.isArray(colors) && colors.length > 0) {
+      for (let i = 0; i < colors.length; i++) {
+        if (colors[i].image) colors[i].image = await uploadToCloudinary(colors[i].image);
+      }
+      currentSpecs.colors = colors;
+    } else {
+      delete currentSpecs.colors;
+    }
 
     const mapped = {
       ...rest,
@@ -290,8 +327,8 @@ export const adminSaveProductFn = createServerFn({ method: "POST" })
       isNew: !!(is_new || isNew),
       isTrending: !!(is_trending || isTrending),
       isBestSeller: !!(is_best_seller || isBestSeller),
-      images: Array.isArray(data.images) ? data.images : [],
-      variants: Array.isArray(data.variants) ? data.variants : [],
+      images,
+      variants,
       specs: currentSpecs,
     };
 
