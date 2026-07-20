@@ -5,8 +5,9 @@ const osUrl = process.env.OPENSEARCH_URL || "https://avnadmin:AVNS_P2TZrd3sKrabz
 
 export const osClient = new Client({
   node: osUrl,
-  requestTimeout: 2000,
-  maxRetries: 0,
+  ssl: { rejectUnauthorized: false },
+  requestTimeout: 5000,
+  maxRetries: 1,
 });
 
 // Helper for generating UUIDs
