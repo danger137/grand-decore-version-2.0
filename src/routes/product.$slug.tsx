@@ -209,7 +209,7 @@ function ProductPage() {
               <img
                 src={displayImages[activeImg] || displayImages[0]}
                 alt={product.name}
-                className="absolute inset-0 h-full w-full object-contain transition-transform duration-300"
+                className="absolute inset-0 h-full w-full object-cover transition-transform duration-300"
                 style={zoom.active ? { transformOrigin: `${zoom.x}% ${zoom.y}%`, transform: "scale(1.8)" } : {}}
               />
             </div>
