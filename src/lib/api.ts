@@ -214,9 +214,10 @@ export const adminLoginFn = createServerFn({ method: "POST" })
   .validator((data: any) => data)
   .handler(async ({ data: { email, password } }) => {
     try {
+      const normalizedEmail = email.toLowerCase().trim();
       const res = await osClient.search({
         index: "admins",
-        body: { query: { term: { "email.keyword": email } } }
+        body: { query: { term: { "email.keyword": normalizedEmail } } }
       });
       const hits = getHits(res);
       if (hits.length === 0) throw new Error("Invalid credentials");
