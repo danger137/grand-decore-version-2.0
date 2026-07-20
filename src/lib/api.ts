@@ -253,19 +253,15 @@ export const adminUpdateOrderFn = createServerFn({ method: "POST" })
     return { id, status };
   });
 
-import { v2 as cloudinary } from "cloudinary";
-
-if (process.env.CLOUDINARY_API_KEY) {
-  cloudinary.config({
-    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-    api_key: process.env.CLOUDINARY_API_KEY,
-    api_secret: process.env.CLOUDINARY_API_SECRET
-  });
-}
-
 const uploadToCloudinary = async (base64: string) => {
   if (!base64 || !base64.startsWith("data:image")) return base64;
   try {
+    const { v2: cloudinary } = await import("cloudinary");
+    cloudinary.config({
+      cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.CLOUDINARY_API_KEY,
+      api_secret: process.env.CLOUDINARY_API_SECRET
+    });
     const res = await cloudinary.uploader.upload(base64);
     return res.secure_url;
   } catch (e) {
